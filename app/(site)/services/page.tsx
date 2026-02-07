@@ -8,17 +8,17 @@ import { ArrowRight, Star, Clock, CheckCircle2 } from "lucide-react";
 
 const serviceTypes = [
   { value: "all", label: "All Services" },
-  { value: "PORTRAIT_PAINTING", label: "Portrait Painting" },
-  { value: "DIGITAL_ILLUSTRATION", label: "Digital Illustration" },
-  { value: "WALL_MURAL", label: "Wall Mural" },
-  { value: "CARICATURE", label: "Caricature" },
-  { value: "LOGO_DESIGN", label: "Logo Design" },
+  { value: "PORTRAIT", label: "Portrait" },
+  { value: "SCULPTURE", label: "Sculpture" },
+  { value: "MURAL", label: "Mural" },
   { value: "CALLIGRAPHY", label: "Calligraphy" },
-  { value: "RESTORATION", label: "Art Restoration" },
-  { value: "PET_PORTRAIT", label: "Pet Portrait" },
-  { value: "CUSTOM_SCULPTURE", label: "Custom Sculpture" },
-  { value: "TATTOO_DESIGN", label: "Tattoo Design" },
-  { value: "OTHER", label: "Other" },
+  { value: "ILLUSTRATION", label: "Illustration" },
+  { value: "BRANDING", label: "Branding" },
+  { value: "BOOK_COVER", label: "Book Cover" },
+  { value: "EXHIBITION", label: "Exhibition" },
+  { value: "CONSULTANCY", label: "Consultancy" },
+  { value: "WORKSHOP", label: "Workshop" },
+  { value: "CUSTOM", label: "Custom" },
 ];
 
 export default function ServicesPage() {

@@ -5,9 +5,9 @@ import Link from "next/link";
 import { ArrowLeft, Save, Upload, Plus, X } from "lucide-react";
 
 const serviceTypes = [
-  "PORTRAIT_PAINTING", "DIGITAL_ILLUSTRATION", "WALL_MURAL", "CARICATURE",
-  "LOGO_DESIGN", "CALLIGRAPHY", "RESTORATION", "PET_PORTRAIT",
-  "CUSTOM_SCULPTURE", "TATTOO_DESIGN", "OTHER",
+  "PORTRAIT", "SCULPTURE", "MURAL", "CALLIGRAPHY",
+  "ILLUSTRATION", "BRANDING", "BOOK_COVER", "EXHIBITION",
+  "CONSULTANCY", "WORKSHOP", "CUSTOM",
 ];
 
 export default function NewServicePage() {

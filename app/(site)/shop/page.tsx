@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { mockProducts, mockCategories } from "@/lib/mock-data";
 import { ProductCard } from "@/components/products/product-card";
 import { useSearchParams } from "next/navigation";
@@ -31,6 +31,23 @@ const priceRanges = [
 ];
 
 export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-stone-200 rounded w-48" />
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (<div key={i} className="h-72 bg-stone-200 rounded-lg" />))}
+          </div>
+        </div>
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
+  );
+}
+
+function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 

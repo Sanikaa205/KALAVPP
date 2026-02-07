@@ -63,7 +63,7 @@ export const commissionSchema = z.object({
   description: z.string().min(20),
   budget: z.number().positive(),
   deadline: z.string().optional(),
-  requirements: z.record(z.unknown()).optional(),
+  requirements: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const addressSchema = z.object({

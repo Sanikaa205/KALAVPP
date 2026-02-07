@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockServices } from "@/lib/mock-data";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { ArrowRight, Star, Clock, CheckCircle2 } from "lucide-react";
@@ -24,28 +23,39 @@ const serviceTypes = [
 export default function ServicesPage() {
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/services")
+      .then(r => r.json())
+      .then(data => {
+        setServices(data.services || []);
+        setLoading(false);
+      });
+  }, []);
 
   const filteredServices = useMemo(() => {
-    let services = [...mockServices];
+    let filtered = [...services];
 
     if (filter !== "all") {
-      services = services.filter((s) => s.type === filter);
+      filtered = filtered.filter((s: any) => s.type === filter);
     }
 
     switch (sortBy) {
       case "price-asc":
-        services.sort((a, b) => a.basePrice - b.basePrice);
+        filtered.sort((a: any, b: any) => a.basePrice - b.basePrice);
         break;
       case "price-desc":
-        services.sort((a, b) => b.basePrice - a.basePrice);
+        filtered.sort((a: any, b: any) => b.basePrice - a.basePrice);
         break;
       case "rating":
-        services.sort((a, b) => b.rating - a.rating);
+        filtered.sort((a: any, b: any) => b.rating - a.rating);
         break;
     }
 
-    return services;
-  }, [filter, sortBy]);
+    return filtered;
+  }, [services, filter, sortBy]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

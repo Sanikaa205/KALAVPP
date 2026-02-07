@@ -1,16 +1,24 @@
 "use client";
 
-import { mockCommissions } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import { Brush, MessageSquare } from "lucide-react";
 
 export default function CustomerCommissionsPage() {
+  const [commissions, setCommissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/commissions")
+      .then(r => r.json())
+      .then(data => setCommissions(data.commissions || []));
+  }, []);
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-stone-900 mb-6">My Commissions</h1>
 
       <div className="space-y-4">
-        {mockCommissions.map((commission) => (
+        {commissions.map((commission: any) => (
           <div
             key={commission.id}
             className="bg-white rounded-lg border border-stone-200 p-6"

@@ -1,11 +1,19 @@
 "use client";
 
-import { mockServices } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, Eye, Star, Clock } from "lucide-react";
 
 export default function VendorServicesPage() {
+  const [services, setServices] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/services")
+      .then(r => r.json())
+      .then(data => setServices(data.services || []));
+  }, []);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -19,7 +27,7 @@ export default function VendorServicesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {mockServices.map((service) => (
+        {services.map((service: any) => (
           <div
             key={service.id}
             className="bg-white rounded-lg border border-stone-200 overflow-hidden"

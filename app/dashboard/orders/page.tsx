@@ -1,11 +1,19 @@
 "use client";
 
-import { mockOrders } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import { Package, Eye } from "lucide-react";
 
 export default function CustomerOrdersPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/orders")
+      .then(r => r.json())
+      .then(data => setOrders(data.orders || []));
+  }, []);
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-stone-900 mb-6">My Orders</h1>
@@ -22,7 +30,7 @@ export default function CustomerOrdersPage() {
 
         {/* Table Body */}
         <div className="divide-y divide-stone-100">
-          {mockOrders.map((order) => (
+          {orders.map((order: any) => (
             <div
               key={order.id}
               className="px-5 py-4 md:grid md:grid-cols-6 md:gap-4 md:items-center space-y-2 md:space-y-0"

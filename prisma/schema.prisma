@@ -199,6 +199,7 @@ model Product {
   artDimensions    String?
   yearCreated      Int?
   isOriginal       Boolean       @default(false)
+  isActive         Boolean       @default(true)
   certificate      String?
 
   vendor        VendorProfile   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
@@ -234,19 +235,23 @@ enum ServiceType {
 }
 
 model Service {
-  id           String      @id @default(cuid())
-  vendorId     String
-  title        String
-  slug         String      @unique
-  description  String
-  type         ServiceType
-  basePrice    Float
-  currency     String      @default("INR")
-  deliveryDays Int?
-  images       String[]
-  isActive     Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id            String      @id @default(cuid())
+  vendorId      String
+  title         String
+  slug          String      @unique
+  description   String
+  type          ServiceType
+  basePrice     Float
+  currency      String      @default("INR")
+  deliveryDays  Int?
+  maxRevisions  Int         @default(3)
+  includes      String[]
+  images        String[]
+  rating        Float       @default(0)
+  reviewCount   Int         @default(0)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   commissions Commission[]

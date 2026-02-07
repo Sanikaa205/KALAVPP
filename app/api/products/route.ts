@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockProducts } from "@/lib/mock-data";
+import { prisma } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -7,57 +7,57 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type");
   const sort = searchParams.get("sort");
   const search = searchParams.get("q");
+  const featured = searchParams.get("featured");
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "12");
 
-  let products = [...mockProducts];
+  const where: Record<string, unknown> = { status: "ACTIVE" };
 
   if (search) {
-    const q = search.toLowerCase();
-    products = products.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q)
-    );
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+      { tags: { has: search.toLowerCase() } },
+    ];
   }
 
   if (category) {
-    products = products.filter((p) => p.category?.slug === category);
+    where.category = { slug: category };
   }
 
   if (type) {
-    products = products.filter((p) => p.type === type);
+    where.type = type;
   }
 
+  if (featured === "true") {
+    where.featured = true;
+  }
+
+  let orderBy: Record<string, string> = { createdAt: "desc" };
   switch (sort) {
-    case "price-asc":
-      products.sort((a, b) => a.price - b.price);
-      break;
-    case "price-desc":
-      products.sort((a, b) => b.price - a.price);
-      break;
-    case "newest":
-      products.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      break;
-    case "rating":
-      products.sort((a, b) => b.rating - a.rating);
-      break;
+    case "price-asc": orderBy = { price: "asc" }; break;
+    case "price-desc": orderBy = { price: "desc" }; break;
+    case "newest": orderBy = { createdAt: "desc" }; break;
+    case "rating": orderBy = { rating: "desc" }; break;
   }
 
-  const total = products.length;
-  const start = (page - 1) * limit;
-  const paginated = products.slice(start, start + limit);
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        category: true,
+        vendor: { include: { user: { select: { name: true, avatar: true } } } },
+        _count: { select: { reviews: true } },
+      },
+    }),
+    prisma.product.count({ where }),
+  ]);
 
   return NextResponse.json({
-    products: paginated,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
+    products,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 }

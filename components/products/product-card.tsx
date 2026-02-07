@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, Heart, Eye } from "lucide-react";
 
 interface ProductCardProps {
-  product: Product;
+  product: any;
   variant?: "default" | "compact" | "horizontal";
 }
 

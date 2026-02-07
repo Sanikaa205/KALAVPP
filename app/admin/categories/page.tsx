@@ -1,12 +1,18 @@
 "use client";
 
-import { mockCategories } from "@/lib/mock-data";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, FolderOpen } from "lucide-react";
 
 export default function AdminCategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: "", description: "" });
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then(r => r.json())
+      .then(data => setCategories(data.categories || []));
+  }, []);
 
   return (
     <div>
@@ -65,7 +71,7 @@ export default function AdminCategoriesPage() {
           <div className="text-right">Actions</div>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockCategories.map((cat) => (
+          {categories.map((cat: any) => (
             <div
               key={cat.id}
               className="px-5 py-4 md:grid md:grid-cols-5 md:gap-4 md:items-center space-y-2 md:space-y-0"

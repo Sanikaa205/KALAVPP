@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { mockUsers } from "@/lib/mock-data";
+import { compare } from "bcryptjs";
+import { prisma } from "@/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -20,18 +21,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        // In production, verify against database with bcrypt
-        // For demo, use mock data
-        const user = mockUsers.find(
-          (u) => u.email === credentials.email
-        );
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        });
 
-        if (!user) {
+        if (!user || !user.passwordHash) {
           return null;
         }
 
-        // Demo password check (in production: bcrypt.compare)
-        const validPassword = credentials.password === "Kalavpp@123";
+        const validPassword = await compare(
+          credentials.password as string,
+          user.passwordHash
+        );
         if (!validPassword) {
           return null;
         }

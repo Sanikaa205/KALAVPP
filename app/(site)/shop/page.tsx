@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
-import { mockProducts, mockCategories } from "@/lib/mock-data";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { ProductCard } from "@/components/products/product-card";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, Grid3X3, LayoutList, X } from "lucide-react";
@@ -51,6 +50,9 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState("newest");
   const [typeFilter, setTypeFilter] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
@@ -58,55 +60,66 @@ function ShopContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/products?limit=100").then(r => r.json()),
+      fetch("/api/categories").then(r => r.json()),
+    ]).then(([prodData, catData]) => {
+      setProducts(prodData.products || []);
+      setCategories(catData.categories || []);
+      setLoading(false);
+    });
+  }, []);
+
   const filteredProducts = useMemo(() => {
-    let products = [...mockProducts];
+    let filtered = [...products];
 
     // Category filter
     if (selectedCategory !== "all") {
-      const cat = mockCategories.find((c) => c.slug === selectedCategory);
+      const cat = categories.find((c: any) => c.slug === selectedCategory);
       if (cat) {
-        products = products.filter((p) => p.categoryId === cat.id);
+        filtered = filtered.filter((p: any) => p.categoryId === cat.id);
       }
     }
 
     // Type filter
     if (typeFilter !== "all") {
-      products = products.filter((p) => p.type === typeFilter);
+      filtered = filtered.filter((p: any) => p.type === typeFilter);
     }
 
     // Price range filter
     if (priceRange !== "all") {
       const [min, max] = priceRange.split("-").map(Number);
       if (max) {
-        products = products.filter((p) => p.price >= min && p.price <= max);
+        filtered = filtered.filter((p: any) => p.price >= min && p.price <= max);
       } else {
-        products = products.filter((p) => p.price >= min);
+        filtered = filtered.filter((p: any) => p.price >= min);
       }
     }
 
     // Sort
     switch (sort) {
       case "price-asc":
-        products.sort((a, b) => a.price - b.price);
+        filtered.sort((a: any, b: any) => a.price - b.price);
         break;
       case "price-desc":
-        products.sort((a, b) => b.price - a.price);
+        filtered.sort((a: any, b: any) => b.price - a.price);
         break;
       case "rating":
-        products.sort((a, b) => b.rating - a.rating);
+        filtered.sort((a: any, b: any) => b.rating - a.rating);
         break;
       case "popular":
-        products.sort((a, b) => b.viewCount - a.viewCount);
+        filtered.sort((a: any, b: any) => b.viewCount - a.viewCount);
         break;
       default:
-        products.sort(
-          (a, b) =>
+        filtered.sort(
+          (a: any, b: any) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     }
 
-    return products;
-  }, [selectedCategory, typeFilter, priceRange, sort]);
+    return filtered;
+  }, [products, categories, selectedCategory, typeFilter, priceRange, sort]);
 
   const activeFilterCount = [
     selectedCategory !== "all",
@@ -120,7 +133,7 @@ function ShopContent() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
           {selectedCategory !== "all"
-            ? mockCategories.find((c) => c.slug === selectedCategory)?.name || "Shop"
+            ? categories.find((c: any) => c.slug === selectedCategory)?.name || "Shop"
             : "Shop All Artworks"}
         </h1>
         <p className="mt-1 text-sm text-stone-500">
@@ -146,7 +159,7 @@ function ShopContent() {
                 >
                   All Categories
                 </button>
-                {mockCategories.map((cat) => (
+                {categories.map((cat: any) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.slug)}
@@ -289,7 +302,7 @@ function ShopContent() {
                     className="mt-1 w-full px-3 py-2 border border-stone-300 rounded-md text-sm"
                   >
                     <option value="all">All Categories</option>
-                    {mockCategories.map((cat) => (
+                    {categories.map((cat: any) => (
                       <option key={cat.id} value={cat.slug}>{cat.name}</option>
                     ))}
                   </select>

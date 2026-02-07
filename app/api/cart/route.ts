@@ -1,76 +1,91 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// In-memory cart for demo (per session via cookie-based mock)
-// In production, this would use Prisma + auth session
-let cartItems: Array<{
-  id: string;
-  productId: string;
-  title: string;
-  price: number;
-  quantity: number;
-  image: string;
-}> = [];
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 export async function GET() {
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ items: [], summary: { subtotal: 0, shipping: 0, tax: 0, total: 0, itemCount: 0 } });
+  }
+
+  const userId = (session.user as { id: string }).id;
+  const cartItems = await prisma.cartItem.findMany({
+    where: { userId },
+    include: { product: { select: { title: true, price: true, images: true, slug: true, stockQuantity: true } } },
+  });
+
+  const items = cartItems.map((item) => ({
+    id: item.id,
+    productId: item.productId,
+    title: item.product.title,
+    price: item.product.price,
+    quantity: item.quantity,
+    image: item.product.images[0] || "",
+    slug: item.product.slug,
+  }));
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 5000 ? 0 : 200;
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + shipping + tax;
 
   return NextResponse.json({
-    items: cartItems,
-    summary: { subtotal, shipping, tax, total, itemCount: cartItems.length },
+    items,
+    summary: { subtotal, shipping, tax, total, itemCount: items.length },
   });
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { productId, title, price, quantity = 1, image } = body;
-
-  const existing = cartItems.find((item) => item.productId === productId);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    cartItems.push({
-      id: `cart-${Date.now()}`,
-      productId,
-      title,
-      price,
-      quantity,
-      image,
-    });
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Please login to add items to cart" }, { status: 401 });
   }
 
-  return NextResponse.json({ message: "Added to cart", items: cartItems }, { status: 201 });
+  const userId = (session.user as { id: string }).id;
+  const { productId, quantity = 1 } = await request.json();
+
+  const cartItem = await prisma.cartItem.upsert({
+    where: { userId_productId: { userId, productId } },
+    update: { quantity: { increment: quantity } },
+    create: { userId, productId, quantity },
+  });
+
+  return NextResponse.json({ message: "Added to cart", cartItem }, { status: 201 });
 }
 
 export async function PUT(request: NextRequest) {
-  const body = await request.json();
-  const { productId, quantity } = body;
-
-  const item = cartItems.find((i) => i.productId === productId);
-  if (!item) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const userId = (session.user as { id: string }).id;
+  const { productId, quantity } = await request.json();
 
   if (quantity <= 0) {
-    cartItems = cartItems.filter((i) => i.productId !== productId);
+    await prisma.cartItem.deleteMany({ where: { userId, productId } });
   } else {
-    item.quantity = quantity;
+    await prisma.cartItem.updateMany({ where: { userId, productId }, data: { quantity } });
   }
 
-  return NextResponse.json({ message: "Cart updated", items: cartItems });
+  return NextResponse.json({ message: "Cart updated" });
 }
 
 export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = (session.user as { id: string }).id;
   const { searchParams } = new URL(request.url);
   const productId = searchParams.get("productId");
 
   if (productId) {
-    cartItems = cartItems.filter((i) => i.productId !== productId);
+    await prisma.cartItem.deleteMany({ where: { userId, productId } });
   } else {
-    cartItems = [];
+    await prisma.cartItem.deleteMany({ where: { userId } });
   }
 
-  return NextResponse.json({ message: "Cart cleared", items: cartItems });
+  return NextResponse.json({ message: "Cart cleared" });
 }

@@ -1,10 +1,18 @@
 "use client";
 
-import { mockProducts } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import { Search, Eye, Ban, Trash2 } from "lucide-react";
 
 export default function AdminProductsPage() {
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products?limit=100")
+      .then(r => r.json())
+      .then(data => setProducts(data.products || []));
+  }, []);
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-stone-900 mb-6">Product Management</h1>
@@ -43,7 +51,7 @@ export default function AdminProductsPage() {
           <div className="text-right">Actions</div>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockProducts.map((product) => (
+          {products.map((product: any) => (
             <div
               key={product.id}
               className="px-5 py-4 md:grid md:grid-cols-8 md:gap-4 md:items-center space-y-2 md:space-y-0"

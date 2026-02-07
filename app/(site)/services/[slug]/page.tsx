@@ -1,7 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
-import { mockServices, mockReviews } from "@/lib/mock-data";
+import { use, useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/ui/star-rating";
@@ -21,13 +20,35 @@ export default function ServiceDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
-  const service = mockServices.find((s) => s.slug === slug);
+  const [service, setService] = useState<any>(null);
+  const [serviceReviews, setServiceReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [commissionForm, setCommissionForm] = useState({
     description: "",
     budget: "",
     deadline: "",
   });
+
+  useEffect(() => {
+    fetch(`/api/services/${slug}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.service) {
+          setService(data.service);
+          setServiceReviews(data.service.reviews || []);
+        }
+        setLoading(false);
+      });
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <p className="text-stone-500">Loading...</p>
+      </div>
+    );
+  }
 
   if (!service) {
     return (
@@ -43,8 +64,6 @@ export default function ServiceDetailPage({
       </div>
     );
   }
-
-  const serviceReviews = mockReviews.filter((r) => r.serviceId === service.id);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -71,7 +90,7 @@ export default function ServiceDetailPage({
             </div>
             {service.images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto">
-                {service.images.map((img, idx) => (
+                {service.images.map((img: string, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
@@ -130,7 +149,7 @@ export default function ServiceDetailPage({
                   What is included
                 </h3>
                 <ul className="space-y-2">
-                  {service.includes.map((item, idx) => (
+                  {service.includes.map((item: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-2 text-sm text-stone-600">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
                       {item}

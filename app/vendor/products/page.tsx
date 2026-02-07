@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { mockProducts } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import { Plus, Search, Edit2, Trash2, Eye, MoreVertical } from "lucide-react";
@@ -9,8 +8,15 @@ import { Plus, Search, Edit2, Trash2, Eye, MoreVertical } from "lucide-react";
 export default function VendorProductsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
-  const products = mockProducts.filter((p) => {
+  useEffect(() => {
+    fetch("/api/products?limit=100")
+      .then(r => r.json())
+      .then(data => setAllProducts(data.products || []));
+  }, []);
+
+  const products = allProducts.filter((p: any) => {
     const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === "all" || p.type === typeFilter;
     return matchSearch && matchType;

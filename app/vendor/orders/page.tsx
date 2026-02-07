@@ -1,10 +1,18 @@
 "use client";
 
-import { mockOrders } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import { Package, Eye, MoreVertical } from "lucide-react";
 
 export default function VendorOrdersPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/orders")
+      .then(r => r.json())
+      .then(data => setOrders(data.orders || []));
+  }, []);
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-stone-900 mb-6">Orders</h1>
@@ -42,7 +50,7 @@ export default function VendorOrdersPage() {
           <div className="text-right">Actions</div>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockOrders.map((order) => (
+          {orders.map((order: any) => (
             <div key={order.id} className="px-5 py-4 md:grid md:grid-cols-7 md:gap-4 md:items-center">
               <div className="col-span-2 flex items-center gap-3">
                 <div className="p-2 bg-stone-100 rounded-md">

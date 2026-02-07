@@ -1,13 +1,18 @@
 "use client";
 
-import { mockProducts } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { ProductCard } from "@/components/products/product-card";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 
 export default function WishlistPage() {
-  // Use first 4 products as mock wishlist
-  const wishlistItems = mockProducts.slice(0, 4);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products?limit=4")
+      .then(r => r.json())
+      .then(data => setWishlistItems(data.products || []));
+  }, []);
 
   return (
     <div>

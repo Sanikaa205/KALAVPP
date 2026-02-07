@@ -1,6 +1,6 @@
 "use client";
 
-import { mockProducts, mockOrders, mockCommissions, mockServices } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -27,6 +27,19 @@ const recentSales = [
 ];
 
 export default function VendorDashboardPage() {
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/commissions").then(r => r.json()),
+      fetch("/api/products?limit=4").then(r => r.json()),
+    ]).then(([comData, prodData]) => {
+      setCommissions(comData.commissions || []);
+      setProducts(prodData.products || []);
+    });
+  }, []);
+
   return (
     <div>
       <div className="mb-8">
@@ -87,7 +100,7 @@ export default function VendorDashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-stone-100">
-            {mockCommissions.map((commission) => (
+            {commissions.map((commission: any) => (
               <div key={commission.id} className="p-4 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-stone-900">{commission.title}</p>
@@ -116,7 +129,7 @@ export default function VendorDashboardPage() {
           </Link>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockProducts.slice(0, 4).map((product) => (
+          {products.slice(0, 4).map((product: any) => (
             <div key={product.id} className="p-4 flex items-center gap-4">
               <div className="w-12 h-12 bg-stone-100 rounded-md overflow-hidden flex-shrink-0">
                 <img

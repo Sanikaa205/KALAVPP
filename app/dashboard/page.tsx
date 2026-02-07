@@ -1,6 +1,6 @@
 "use client";
 
-import { mockOrders, mockCommissions } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -20,6 +20,19 @@ const stats = [
 ];
 
 export default function CustomerDashboardPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/orders").then(r => r.json()),
+      fetch("/api/commissions").then(r => r.json()),
+    ]).then(([ordData, comData]) => {
+      setOrders(ordData.orders || []);
+      setCommissions(comData.commissions || []);
+    });
+  }, []);
+
   return (
     <div>
       <div className="mb-8">
@@ -53,7 +66,7 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockOrders.slice(0, 3).map((order) => (
+          {orders.slice(0, 3).map((order: any) => (
             <div key={order.id} className="p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-2.5 bg-stone-100 rounded-lg">
@@ -100,7 +113,7 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockCommissions.slice(0, 2).map((commission) => (
+          {commissions.slice(0, 2).map((commission: any) => (
             <div key={commission.id} className="p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-2.5 bg-amber-50 rounded-lg">

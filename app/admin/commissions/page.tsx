@@ -1,10 +1,18 @@
 "use client";
 
-import { mockCommissions } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import { Eye, Search, Brush } from "lucide-react";
 
 export default function AdminCommissionsPage() {
+  const [commissions, setCommissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/commissions")
+      .then(r => r.json())
+      .then(data => setCommissions(data.commissions || []));
+  }, []);
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-stone-900 mb-6">Commission Oversight</h1>
@@ -52,7 +60,7 @@ export default function AdminCommissionsPage() {
           <div className="text-right">Actions</div>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockCommissions.map((com) => (
+          {commissions.map((com: any) => (
             <div
               key={com.id}
               className="px-5 py-4 md:grid md:grid-cols-7 md:gap-4 md:items-center space-y-2 md:space-y-0"

@@ -1,9 +1,17 @@
 "use client";
 
-import { mockUsers } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { Eye, Ban, MoreVertical, Search, UserPlus } from "lucide-react";
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then(r => r.json())
+      .then(data => setUsers(data.users || []));
+  }, []);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -52,7 +60,7 @@ export default function AdminUsersPage() {
           <div className="text-right">Actions</div>
         </div>
         <div className="divide-y divide-stone-100">
-          {mockUsers.map((user) => (
+          {users.map((user: any) => (
             <div
               key={user.id}
               className="px-5 py-4 md:grid md:grid-cols-6 md:gap-4 md:items-center space-y-2 md:space-y-0"

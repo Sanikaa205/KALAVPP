@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockServices } from "@/lib/mock-data";
+import { prisma } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -7,32 +7,32 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get("sort");
   const search = searchParams.get("q");
 
-  let services = [...mockServices];
+  const where: Record<string, unknown> = { isActive: true };
 
   if (search) {
-    const q = search.toLowerCase();
-    services = services.filter(
-      (s) =>
-        s.title.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q)
-    );
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   if (type) {
-    services = services.filter((s) => s.type === type);
+    where.type = type;
   }
 
+  let orderBy: Record<string, string> = { createdAt: "desc" };
   switch (sort) {
-    case "price-asc":
-      services.sort((a, b) => a.startingPrice - b.startingPrice);
-      break;
-    case "price-desc":
-      services.sort((a, b) => b.startingPrice - a.startingPrice);
-      break;
-    case "rating":
-      services.sort((a, b) => b.rating - a.rating);
-      break;
+    case "price-asc": orderBy = { basePrice: "asc" }; break;
+    case "price-desc": orderBy = { basePrice: "desc" }; break;
   }
+
+  const services = await prisma.service.findMany({
+    where,
+    orderBy,
+    include: {
+      vendor: { include: { user: { select: { name: true, avatar: true } } } },
+    },
+  });
 
   return NextResponse.json({ services });
 }

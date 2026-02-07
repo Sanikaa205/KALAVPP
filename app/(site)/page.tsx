@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockProducts, mockCategories, mockVendors, mockServices } from "@/lib/mock-data";
+import { prisma } from "@/lib/db";
 import { ProductCard } from "@/components/products/product-card";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -40,9 +40,14 @@ const features = [
   },
 ];
 
-export default function HomePage() {
-  const featuredProducts = mockProducts.filter((p) => p.featured);
-  const allProducts = mockProducts.slice(0, 8);
+export default async function HomePage() {
+  const [featuredProducts, allProducts, categories, vendors, services] = await Promise.all([
+    prisma.product.findMany({ where: { featured: true, status: "ACTIVE" }, include: { category: true, vendor: { include: { user: { select: { name: true } } } } }, take: 8 }),
+    prisma.product.findMany({ where: { status: "ACTIVE" }, orderBy: { createdAt: "desc" }, include: { category: true, vendor: { include: { user: { select: { name: true } } } } }, take: 8 }),
+    prisma.category.findMany({ orderBy: { sortOrder: "asc" }, include: { _count: { select: { products: true } } } }),
+    prisma.vendorProfile.findMany({ where: { status: "APPROVED" }, include: { user: { select: { name: true, avatar: true } } }, take: 3 }),
+    prisma.service.findMany({ where: { isActive: true }, include: { vendor: true }, take: 6 }),
+  ]);
 
   return (
     <div>
@@ -131,7 +136,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {mockCategories.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category.id}
               href={`/shop?category=${category.slug}`}
@@ -203,7 +208,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {mockVendors.map((vendor) => (
+          {vendors.map((vendor) => (
             <Link
               key={vendor.id}
               href={`/artists/${vendor.storeSlug}`}
@@ -264,7 +269,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockServices.slice(0, 6).map((service) => (
+            {services.slice(0, 6).map((service) => (
               <Link
                 key={service.id}
                 href={`/services/${service.slug}`}

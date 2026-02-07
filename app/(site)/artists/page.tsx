@@ -1,54 +1,32 @@
 "use client";
 
-import { mockProducts, mockServices } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { ProductCard } from "@/components/products/product-card";
 import Link from "next/link";
 import { Star, MapPin, Calendar, ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
-const mockVendors = [
-  {
-    id: "v1",
-    storeName: "Priya's Canvas",
-    storeSlug: "priyas-canvas",
-    bio: "Contemporary artist specializing in vibrant oil paintings and mixed media. Each piece tells a story of colour, emotion, and the human experience. Based in Jaipur, creating art that bridges traditional Indian aesthetics with modern expression.",
-    avatar: null,
-    banner: null,
-    location: "Jaipur, Rajasthan",
-    rating: 4.9,
-    totalSales: 156,
-    joinedDate: "2023-03-15",
-    specialties: ["Oil Painting", "Mixed Media", "Portraits"],
-  },
-  {
-    id: "v2",
-    storeName: "Arjun Digital Studio",
-    storeSlug: "arjun-digital-studio",
-    bio: "Digital artist and illustrator creating stunning concept art, character designs, and digital prints. Blending technology with artistic vision to create unique pieces for collectors and commercial clients.",
-    avatar: null,
-    banner: null,
-    location: "Mumbai, Maharashtra",
-    rating: 4.7,
-    totalSales: 89,
-    joinedDate: "2023-06-20",
-    specialties: ["Digital Art", "Illustrations", "Concept Art"],
-  },
-  {
-    id: "v3",
-    storeName: "Kavya Handicrafts",
-    storeSlug: "kavya-handicrafts",
-    bio: "Traditional handicraft artist preserving the ancient art forms of India. Specializing in Madhubani paintings, pottery, and handwoven textiles. Every creation carries centuries of cultural heritage.",
-    avatar: null,
-    banner: null,
-    location: "Varanasi, UP",
-    rating: 4.8,
-    totalSales: 234,
-    joinedDate: "2023-01-10",
-    specialties: ["Madhubani", "Pottery", "Textiles"],
-  },
-];
-
 export default function ArtistsPage() {
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/vendors")
+      .then(r => r.json())
+      .then(data => {
+        setVendors(data.vendors || []);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <p className="text-stone-500">Loading artists...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero */}
@@ -64,9 +42,9 @@ export default function ArtistsPage() {
 
       {/* Artists Grid */}
       <div className="space-y-8">
-        {mockVendors.map((vendor) => {
-          const vendorProducts = mockProducts.filter((p) => p.vendorId === vendor.id).slice(0, 3);
-          const vendorServices = mockServices.filter((s) => s.vendorId === vendor.id).slice(0, 2);
+        {vendors.map((vendor: any) => {
+          const vendorProducts = vendor.products || [];
+          const vendorServices = vendor.services || [];
 
           return (
             <div
@@ -95,7 +73,7 @@ export default function ArtistsPage() {
                         <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> {vendor.rating}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" /> Joined {new Date(vendor.joinedDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                        <Calendar className="h-3.5 w-3.5" /> Joined {new Date(vendor.createdAt || "2024-01-01").toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
                       </span>
                     </div>
                   </div>
@@ -113,7 +91,7 @@ export default function ArtistsPage() {
 
                 {/* Specialties */}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {vendor.specialties.map((s) => (
+                  {(vendor.specializations || []).map((s: string) => (
                     <span key={s} className="px-2.5 py-1 bg-stone-100 text-stone-600 rounded-full text-xs">
                       {s}
                     </span>
@@ -141,7 +119,7 @@ export default function ArtistsPage() {
                   <div className="mt-6">
                     <h3 className="text-sm font-semibold text-stone-900 mb-3">Featured Artworks</h3>
                     <div className="grid grid-cols-3 gap-3">
-                      {vendorProducts.map((product) => (
+                      {vendorProducts.map((product: any) => (
                         <Link
                           key={product.id}
                           href={`/shop/${product.slug}`}
@@ -163,7 +141,7 @@ export default function ArtistsPage() {
                   <div className="mt-4">
                     <h3 className="text-sm font-semibold text-stone-900 mb-2">Services Offered</h3>
                     <div className="flex flex-wrap gap-3">
-                      {vendorServices.map((service) => (
+                      {vendorServices.map((service: any) => (
                         <Link
                           key={service.id}
                           href={`/services/${service.slug}`}

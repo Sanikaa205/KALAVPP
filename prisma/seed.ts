@@ -1,267 +1,189 @@
 import "dotenv/config";
-import { PrismaClient, UserRole } from "@prisma/client";
-import { hash } from "bcryptjs";
+import pg from "pg";
+import { hashSync } from "bcryptjs";
 
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
+const DATABASE_URL = process.env.DATABASE_URL!;
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  const client = new pg.Client({ connectionString: DATABASE_URL });
+  await client.connect();
+  console.log("🌱 Connected to database, seeding...");
 
-  // Create categories
-  const categories = await Promise.all([
-    prisma.category.create({
-      data: {
-        name: "Paintings",
-        slug: "paintings",
-        description: "Original artwork and paintings",
-        image: "/images/categories/paintings.jpg",
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: "Sculptures",
-        slug: "sculptures",
-        description: "Handcrafted sculptures and 3D art",
-        image: "/images/categories/sculptures.jpg",
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: "Digital Art",
-        slug: "digital-art",
-        description: "Digital illustrations and designs",
-        image: "/images/categories/digital-art.jpg",
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: "Photography",
-        slug: "photography",
-        description: "Professional photography prints",
-        image: "/images/categories/photography.jpg",
-      },
-    }),
-  ]);
+  // Clean existing data in correct order (respect foreign keys)
+  await client.query(`
+    DELETE FROM "Review";
+    DELETE FROM "OrderItem";
+    DELETE FROM "Order";
+    DELETE FROM "Commission";
+    DELETE FROM "CartItem";
+    DELETE FROM "WishlistItem";
+    DELETE FROM "DigitalDownload";
+    DELETE FROM "Notification";
+    DELETE FROM "Product";
+    DELETE FROM "Service";
+    DELETE FROM "VendorProfile";
+    DELETE FROM "Address";
+    DELETE FROM "Session";
+    DELETE FROM "OAuthAccount";
+    DELETE FROM "Category";
+    DELETE FROM "User";
+    DELETE FROM "SiteSetting";
+  `);
+  console.log("✅ Cleaned existing data");
 
-  console.log(`✅ Created ${categories.length} categories`);
+  // Create Users
+  const adminPass = hashSync("Admin@123", 10);
+  const vendorPass = hashSync("Vendor@123", 10);
+  const customerPass = hashSync("Customer@123", 10);
 
-  // Create admin user
-  const admin = await prisma.user.create({
-    data: {
-      name: "Admin User",
-      email: "admin@kalavpp.com",
-      password: await hash("admin123", 10),
-      role: UserRole.ADMIN,
-      emailVerified: new Date(),
-    },
-  });
+  await client.query(`
+    INSERT INTO "User" (id, email, "passwordHash", name, role, status, "emailVerified", "createdAt", "updatedAt")
+    VALUES 
+      ('usr_admin1', 'admin@kalavpp.com', $1, 'Kalavpp Admin', 'ADMIN', 'ACTIVE', NOW(), NOW(), NOW()),
+      ('usr_vendor1', 'priya@kalavpp.com', $2, 'Priya Sharma', 'VENDOR', 'ACTIVE', NOW(), NOW(), NOW()),
+      ('usr_vendor2', 'rajesh@kalavpp.com', $2, 'Rajesh Kumar', 'VENDOR', 'ACTIVE', NOW(), NOW(), NOW()),
+      ('usr_vendor3', 'ananya@kalavpp.com', $2, 'Ananya Iyer', 'VENDOR', 'ACTIVE', NOW(), NOW(), NOW()),
+      ('usr_cust1', 'aarti@example.com', $3, 'Aarti Deshmukh', 'CUSTOMER', 'ACTIVE', NOW(), NOW(), NOW()),
+      ('usr_cust2', 'vikram@example.com', $3, 'Vikram Singh', 'CUSTOMER', 'ACTIVE', NOW(), NOW(), NOW());
+  `, [adminPass, vendorPass, customerPass]);
+  console.log("✅ Created 6 users");
 
-  console.log(`✅ Created admin user: ${admin.email}`);
+  // Create Vendor Profiles
+  await client.query(`
+    INSERT INTO "VendorProfile" (id, "userId", "storeName", "storeSlug", description, specializations, status, "commissionRate", "totalSales", "totalOrders", rating, "createdAt", "updatedAt")
+    VALUES 
+      ('vp_1', 'usr_vendor1', 'Priya Art Studio', 'priya-art-studio', 
+       'Contemporary Indian art blending traditional techniques with modern expression. Specializing in oil paintings, watercolors, and mixed media.',
+       ARRAY['Oil Painting', 'Watercolor', 'Mixed Media'], 'APPROVED', 10.0, 245000, 18, 4.8, NOW(), NOW()),
+      ('vp_2', 'usr_vendor2', 'Rajesh Digital Creations', 'rajesh-digital',
+       'Digital art and custom illustrations for brands, books, and personal collections.',
+       ARRAY['Digital Art', 'Illustration', 'Branding'], 'APPROVED', 10.0, 180000, 25, 4.6, NOW(), NOW()),
+      ('vp_3', 'usr_vendor3', 'Ananya Fine Arts', 'ananya-fine-arts',
+       'Traditional South Indian art forms including Tanjore paintings, Mysore style, and contemporary interpretations.',
+       ARRAY['Tanjore Painting', 'Traditional Art', 'Sculpture'], 'APPROVED', 10.0, 320000, 12, 4.9, NOW(), NOW());
+  `);
+  console.log("✅ Created 3 vendor profiles");
 
-  // Create vendor users
-  const vendor1 = await prisma.user.create({
-    data: {
-      name: "Priya Sharma",
-      email: "priya@kalavpp.com",
-      password: await hash("vendor123", 10),
-      role: UserRole.VENDOR,
-      emailVerified: new Date(),
-      vendorProfile: {
-        create: {
-          businessName: "Priya's Art Studio",
-          description: "Contemporary Indian art and traditional paintings",
-          taxId: "GST123456789",
-          bankAccount: "HDFC0001234",
-          ifscCode: "HDFC0001234",
-          panCard: "ABCDE1234F",
-          isVerified: true,
-        },
-      },
-    },
-  });
+  // Create Categories
+  await client.query(`
+    INSERT INTO "Category" (id, name, slug, description, image, "sortOrder", "createdAt")
+    VALUES 
+      ('cat_1', 'Original Artworks', 'original-artworks', 'One-of-a-kind paintings and artworks', '/images/categories/original.jpg', 1, NOW()),
+      ('cat_2', 'Prints & Reproductions', 'prints-reproductions', 'High-quality prints of popular artworks', '/images/categories/prints.jpg', 2, NOW()),
+      ('cat_3', 'Handcrafted Items', 'handcrafted-items', 'Handmade crafts and artisan products', '/images/categories/handcrafted.jpg', 3, NOW()),
+      ('cat_4', 'Digital Art', 'digital-art', 'Digital illustrations and downloads', '/images/categories/digital.jpg', 4, NOW()),
+      ('cat_5', 'Traditional & Tribal', 'traditional-tribal', 'Traditional Indian art forms', '/images/categories/traditional.jpg', 5, NOW()),
+      ('cat_6', 'Sculptures & Installations', 'sculptures-installations', '3D art and sculptures', '/images/categories/sculptures.jpg', 6, NOW()),
+      ('cat_7', 'Art Merchandise', 'art-merchandise', 'Art-inspired products', '/images/categories/merchandise.jpg', 7, NOW()),
+      ('cat_8', 'Art Books & Stationery', 'art-books-stationery', 'Books, journals, and art supplies', '/images/categories/books.jpg', 8, NOW());
+  `);
+  console.log("✅ Created 8 categories");
 
-  const vendor2 = await prisma.user.create({
-    data: {
-      name: "Rajesh Kumar",
-      email: "rajesh@kalavpp.com",
-      password: await hash("vendor123", 10),
-      role: UserRole.VENDOR,
-      emailVerified: new Date(),
-      vendorProfile: {
-        create: {
-          businessName: "Rajesh Digital Creations",
-          description: "Digital art and custom illustrations",
-          taxId: "GST987654321",
-          bankAccount: "ICICI0005678",
-          ifscCode: "ICICI0005678",
-          panCard: "XYZAB9876C",
-          isVerified: true,
-        },
-      },
-    },
-  });
+  // Create Products
+  await client.query(`
+    INSERT INTO "Product" (id, "vendorId", "categoryId", title, slug, description, "shortDescription", type, status, price, "compareAtPrice", images, tags, featured, rating, "reviewCount", "stockQuantity", sku, medium, style, "artDimensions", "yearCreated", "isOriginal", "createdAt", "updatedAt")
+    VALUES 
+      ('prod_1', 'vp_1', 'cat_1', 'Sunset Over Mumbai', 'sunset-over-mumbai',
+       'A breathtaking oil painting capturing the golden hour over Mumbai''s iconic skyline.', 'Oil painting of Mumbai sunset', 'PHYSICAL', 'ACTIVE', 15000, 20000,
+       ARRAY['/images/products/sunset-mumbai.jpg'], ARRAY['oil painting', 'mumbai', 'sunset'],
+       true, 4.8, 3, 1, 'ART-001', 'Oil on Canvas', 'Impressionism', '24x36 inches', 2025, true, NOW(), NOW()),
+      ('prod_2', 'vp_1', 'cat_1', 'Abstract Emotions', 'abstract-emotions',
+       'A vibrant abstract painting exploring human emotions through bold color combinations.', 'Abstract acrylic painting', 'PHYSICAL', 'ACTIVE', 12000, NULL,
+       ARRAY['/images/products/abstract-emotions.jpg'], ARRAY['abstract', 'modern', 'acrylic'],
+       true, 4.5, 2, 1, 'ART-002', 'Acrylic on Canvas', 'Abstract', '30x30 inches', 2025, true, NOW(), NOW()),
+      ('prod_3', 'vp_2', 'cat_4', 'Digital Portrait Pack', 'digital-portrait-pack',
+       'A stunning collection of 5 high-resolution digital portraits.', '5 digital portraits', 'DIGITAL', 'ACTIVE', 2500, 3500,
+       ARRAY['/images/products/digital-portraits.jpg'], ARRAY['digital', 'portraits', 'download'],
+       true, 4.7, 5, 999, 'DIG-001', NULL, 'Digital Art', NULL, 2025, false, NOW(), NOW()),
+      ('prod_4', 'vp_3', 'cat_5', 'Tanjore Krishna', 'tanjore-krishna',
+       'An exquisite Tanjore painting of Lord Krishna with 22-carat gold foil work.', 'Traditional Tanjore painting', 'PHYSICAL', 'ACTIVE', 35000, 45000,
+       ARRAY['/images/products/tanjore-krishna.jpg'], ARRAY['tanjore', 'traditional', 'krishna'],
+       true, 5.0, 4, 1, 'TRD-001', 'Gold foil, Semi-precious stones', 'Tanjore', '18x24 inches', 2024, true, NOW(), NOW()),
+      ('prod_5', 'vp_2', 'cat_2', 'Mumbai Local Series', 'mumbai-local-series',
+       'Set of 4 vibrant art prints depicting Mumbai''s local trains.', 'Set of 4 premium art prints', 'PHYSICAL', 'ACTIVE', 3500, 5000,
+       ARRAY['/images/products/mumbai-local.jpg'], ARRAY['prints', 'mumbai', 'trains'],
+       false, 4.3, 6, 50, 'PRT-001', 'Archival Print', 'Pop Art', '12x16 inches each', 2025, false, NOW(), NOW()),
+      ('prod_6', 'vp_1', 'cat_3', 'Hand-Painted Ceramic Vase', 'hand-painted-ceramic-vase',
+       'Beautifully hand-painted ceramic vase with Madhubani motifs.', 'Handcrafted ceramic vase', 'PHYSICAL', 'ACTIVE', 4500, NULL,
+       ARRAY['/images/products/ceramic-vase.jpg'], ARRAY['ceramic', 'handcrafted', 'madhubani'],
+       false, 4.6, 2, 5, 'HND-001', 'Ceramic', 'Madhubani', '10 inches height', 2025, true, NOW(), NOW()),
+      ('prod_7', 'vp_3', 'cat_6', 'Dancing Nataraja Bronze', 'dancing-nataraja-bronze',
+       'Bronze sculpture of Lord Nataraja using lost wax technique.', 'Bronze Nataraja sculpture', 'PHYSICAL', 'ACTIVE', 28000, 35000,
+       ARRAY['/images/products/nataraja.jpg'], ARRAY['bronze', 'sculpture', 'nataraja'],
+       true, 4.9, 3, 2, 'SCL-001', 'Bronze', 'Traditional', '12 inches height', 2024, true, NOW(), NOW()),
+      ('prod_8', 'vp_2', 'cat_7', 'Art Tote Bag - Warli', 'art-tote-bag-warli',
+       'Canvas tote bag featuring authentic Warli art design.', 'Canvas tote with Warli art', 'MERCHANDISE', 'ACTIVE', 899, 1200,
+       ARRAY['/images/products/tote-warli.jpg'], ARRAY['tote bag', 'warli', 'merchandise'],
+       false, 4.4, 8, 100, 'MRC-001', 'Canvas', 'Warli', NULL, 2025, false, NOW(), NOW());
+  `);
+  console.log("✅ Created 8 products");
 
-  console.log(`✅ Created 2 vendor users`);
+  // Create Services
+  await client.query(`
+    INSERT INTO "Service" (id, "vendorId", title, slug, description, type, "basePrice", "deliveryDays", images, "isActive", "createdAt", "updatedAt")
+    VALUES 
+      ('svc_1', 'vp_1', 'Custom Portrait Painting', 'custom-portrait-painting',
+       'Get a personalized oil or acrylic painting portrait from your photo.', 'PORTRAIT', 8000, 14, ARRAY['/images/services/portrait.jpg'], true, NOW(), NOW()),
+      ('svc_2', 'vp_2', 'Logo & Brand Design', 'logo-brand-design',
+       'Professional logo and brand identity design. Includes 3 concepts.', 'BRANDING', 5000, 7, ARRAY['/images/services/branding.jpg'], true, NOW(), NOW()),
+      ('svc_3', 'vp_3', 'Custom Tanjore Painting', 'custom-tanjore-painting',
+       'Commission a custom Tanjore painting with real gold foil.', 'CUSTOM', 25000, 30, ARRAY['/images/services/tanjore.jpg'], true, NOW(), NOW()),
+      ('svc_4', 'vp_1', 'Wall Mural Painting', 'wall-mural-painting',
+       'Transform your space with a custom wall mural.', 'MURAL', 15000, 21, ARRAY['/images/services/mural.jpg'], true, NOW(), NOW()),
+      ('svc_5', 'vp_2', 'Book Cover Illustration', 'book-cover-illustration',
+       'Custom book cover illustration and design.', 'BOOK_COVER', 7000, 10, ARRAY['/images/services/book-cover.jpg'], true, NOW(), NOW()),
+      ('svc_6', 'vp_3', 'Art Consultancy', 'art-consultancy',
+       'Professional art consultancy for interior decoration and collections.', 'CONSULTANCY', 3000, 3, ARRAY['/images/services/consultancy.jpg'], true, NOW(), NOW());
+  `);
+  console.log("✅ Created 6 services");
 
-  // Create customer users
-  const customer1 = await prisma.user.create({
-    data: {
-      name: "Aarti Deshmukh",
-      email: "aarti@example.com",
-      password: await hash("customer123", 10),
-      role: UserRole.CUSTOMER,
-      emailVerified: new Date(),
-    },
-  });
+  // Create Orders
+  await client.query(`
+    INSERT INTO "Order" (id, "orderNumber", "userId", subtotal, "shippingCost", tax, total, status, "paymentStatus", "paymentMethod", "createdAt", "updatedAt")
+    VALUES 
+      ('ord_1', 'KAL-2025-001', 'usr_cust1', 15000, 0, 2700, 17700, 'DELIVERED', 'PAID', 'razorpay', NOW() - interval '10 days', NOW()),
+      ('ord_2', 'KAL-2025-002', 'usr_cust2', 3500, 150, 657, 4307, 'SHIPPED', 'PAID', 'razorpay', NOW() - interval '3 days', NOW()),
+      ('ord_3', 'KAL-2025-003', 'usr_cust1', 2500, 0, 450, 2950, 'CONFIRMED', 'PAID', 'upi', NOW() - interval '1 day', NOW());
+  `);
 
-  const customer2 = await prisma.user.create({
-    data: {
-      name: "Vikram Singh",
-      email: "vikram@example.com",
-      password: await hash("customer123", 10),
-      role: UserRole.CUSTOMER,
-      emailVerified: new Date(),
-    },
-  });
+  await client.query(`
+    INSERT INTO "OrderItem" (id, "orderId", "productId", title, price, quantity, type)
+    VALUES 
+      ('oi_1', 'ord_1', 'prod_1', 'Sunset Over Mumbai', 15000, 1, 'PHYSICAL'),
+      ('oi_2', 'ord_2', 'prod_5', 'Mumbai Local Series', 3500, 1, 'PHYSICAL'),
+      ('oi_3', 'ord_3', 'prod_3', 'Digital Portrait Pack', 2500, 1, 'DIGITAL');
+  `);
+  console.log("✅ Created 3 orders with items");
 
-  console.log(`✅ Created 2 customer users`);
+  // Create Commissions
+  await client.query(`
+    INSERT INTO "Commission" (id, "customerId", "vendorId", "serviceId", title, description, budget, status, deadline, "createdAt", "updatedAt")
+    VALUES 
+      ('com_1', 'usr_cust1', 'vp_1', 'svc_1', 'Family Portrait', 'Oil painting portrait of our family of 4.', 12000, 'IN_PROGRESS', NOW() + interval '14 days', NOW() - interval '5 days', NOW()),
+      ('com_2', 'usr_cust2', 'vp_2', 'svc_2', 'Startup Logo', 'Modern minimalist logo for tech startup.', 5000, 'ACCEPTED', NOW() + interval '7 days', NOW() - interval '2 days', NOW());
+  `);
+  console.log("✅ Created 2 commissions");
 
-  // Create products
-  const product1 = await prisma.product.create({
-    data: {
-      name: "Sunset Over Mumbai",
-      slug: "sunset-over-mumbai",
-      description: "Beautiful oil painting capturing the golden hour over Mumbai skyline. Original artwork on canvas.",
-      shortDescription: "Oil painting of Mumbai sunset",
-      price: 15000,
-      compareAtPrice: 20000,
-      vendorId: vendor1.id,
-      categoryId: categories[0].id,
-      stock: 1,
-      sku: "PAINT-001",
-      featured: true,
-      published: true,
-      images: ["/images/products/sunset-mumbai.jpg"],
-      tags: ["oil painting", "mumbai", "sunset", "original"],
-    },
-  });
+  // Create Reviews
+  await client.query(`
+    INSERT INTO "Review" (id, "userId", "productId", rating, title, comment, "isVerified", "createdAt", "updatedAt")
+    VALUES 
+      ('rev_1', 'usr_cust1', 'prod_1', 5, 'Absolutely Stunning!', 'Colors are even more vibrant in person. Remarkable skill.', true, NOW() - interval '5 days', NOW()),
+      ('rev_2', 'usr_cust2', 'prod_4', 5, 'Museum Quality', 'The gold foil work is exquisite. Worth every rupee.', true, NOW() - interval '3 days', NOW()),
+      ('rev_3', 'usr_cust1', 'prod_3', 4, 'Great Digital Art', 'Beautiful portraits with amazing detail.', true, NOW() - interval '2 days', NOW()),
+      ('rev_4', 'usr_cust2', 'prod_7', 5, 'Masterpiece!', 'The Nataraja sculpture is incredible detail.', true, NOW() - interval '1 day', NOW());
+  `);
+  console.log("✅ Created 4 reviews");
 
-  const product2 = await prisma.product.create({
-    data: {
-      name: "Abstract Emotions",
-      slug: "abstract-emotions",
-      description: "Modern abstract painting with vibrant colors expressing human emotions. Acrylic on canvas.",
-      shortDescription: "Abstract acrylic painting",
-      price: 12000,
-      vendorId: vendor1.id,
-      categoryId: categories[0].id,
-      stock: 1,
-      sku: "PAINT-002",
-      featured: true,
-      published: true,
-      images: ["/images/products/abstract-emotions.jpg"],
-      tags: ["abstract", "modern", "acrylic"],
-    },
-  });
-
-  const product3 = await prisma.product.create({
-    data: {
-      name: "Digital Portrait Pack",
-      slug: "digital-portrait-pack",
-      description: "Collection of 5 high-resolution digital portraits. Instant download after purchase.",
-      shortDescription: "5 digital portraits",
-      price: 2500,
-      compareAtPrice: 3500,
-      vendorId: vendor2.id,
-      categoryId: categories[2].id,
-      stock: 999,
-      sku: "DIG-001",
-      featured: true,
-      published: true,
-      images: ["/images/products/digital-portraits.jpg"],
-      tags: ["digital", "portraits", "download"],
-      digitalDownload: {
-        create: {
-          fileName: "digital-portraits-pack.zip",
-          fileUrl: "/downloads/digital-portraits-pack.zip",
-          fileSize: 125000000, // 125 MB
-          downloadLimit: 5,
-        },
-      },
-    },
-  });
-
-  console.log(`✅ Created ${3} products`);
-
-  // Create services
-  const service1 = await prisma.service.create({
-    data: {
-      name: "Custom Portrait Painting",
-      slug: "custom-portrait-painting",
-      description: "Get a personalized oil painting portrait from your photo. Available in multiple sizes.",
-      shortDescription: "Custom portrait from photo",
-      basePrice: 8000,
-      vendorId: vendor1.id,
-      categoryId: categories[0].id,
-      featured: true,
-      published: true,
-      images: ["/images/services/custom-portrait.jpg"],
-      tags: ["custom", "portrait", "painting", "commission"],
-      deliveryTime: 14,
-    },
-  });
-
-  const service2 = await prisma.service.create({
-    data: {
-      name: "Logo Design",
-      slug: "logo-design",
-      description: "Professional logo design for your business. Includes 3 concepts and unlimited revisions.",
-      shortDescription: "Custom logo design",
-      basePrice: 5000,
-      vendorId: vendor2.id,
-      categoryId: categories[2].id,
-      featured: true,
-      published: true,
-      images: ["/images/services/logo-design.jpg"],
-      tags: ["logo", "branding", "design", "business"],
-      deliveryTime: 7,
-    },
-  });
-
-  console.log(`✅ Created ${2} services`);
-
-  // Add reviews
-  await prisma.review.create({
-    data: {
-      rating: 5,
-      comment: "Absolutely beautiful painting! The colors are stunning and it arrived perfectly packaged.",
-      productId: product1.id,
-      userId: customer1.id,
-    },
-  });
-
-  await prisma.review.create({
-    data: {
-      rating: 5,
-      comment: "Amazing work! The portrait exceeded my expectations. Highly recommended!",
-      serviceId: service1.id,
-      userId: customer2.id,
-    },
-  });
-
-  console.log(`✅ Created 2 reviews`);
-
-  console.log("✨ Seeding completed successfully!");
+  await client.end();
+  console.log("\n✨ Database seeded successfully!");
+  console.log("\n📋 Login credentials:");
+  console.log("  Admin:    admin@kalavpp.com / Admin@123");
+  console.log("  Vendor:   priya@kalavpp.com / Vendor@123");
+  console.log("  Customer: aarti@example.com / Customer@123");
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error("❌ Seeding failed:", e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+main().catch((e) => {
+  console.error("❌ Seed failed:", e);
+  process.exit(1);
+});

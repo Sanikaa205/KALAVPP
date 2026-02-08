@@ -138,7 +138,7 @@ export default function AddressesPage() {
 
       {addresses.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {addresses.map((addr) => (
+          {addresses.map((addr: any) => (
             <div key={addr.id} className={`bg-white rounded-lg border p-4 relative ${addr.isDefault ? "border-amber-300 ring-1 ring-amber-200" : "border-stone-200"}`}>
               {addr.isDefault && (
                 <span className="absolute top-3 right-3 inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">

@@ -183,7 +183,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
+            {featuredProducts.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -209,7 +209,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {vendors.map((vendor) => (
+          {vendors.map((vendor: any) => (
             <Link
               key={vendor.id}
               href={`/artists/${vendor.storeSlug}`}
@@ -236,7 +236,7 @@ export default async function HomePage() {
                 {vendor.description}
               </p>
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {vendor.specializations.map((spec) => (
+                {vendor.specializations.map((spec: string) => (
                   <span
                     key={spec}
                     className="px-2 py-0.5 bg-stone-100 text-stone-600 text-xs rounded-full"
@@ -270,7 +270,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.slice(0, 6).map((service) => (
+            {services.slice(0, 6).map((service: any) => (
               <Link
                 key={service.id}
                 href={`/services/${service.slug}`}
@@ -327,7 +327,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {allProducts.map((product) => (
+          {allProducts.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

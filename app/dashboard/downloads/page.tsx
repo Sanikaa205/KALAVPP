@@ -42,7 +42,7 @@ export default function DownloadsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {downloads.map((dl) => {
+              {downloads.map((dl: any) => {
                 const expired = dl.expiresAt && new Date(dl.expiresAt) < new Date();
                 const maxedOut = dl.downloadCount >= dl.maxDownloads;
                 const canDownload = !expired && !maxedOut;

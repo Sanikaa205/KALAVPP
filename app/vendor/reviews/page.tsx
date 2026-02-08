@@ -103,7 +103,7 @@ export default function VendorReviewsPage() {
       {/* Review List */}
       {filtered.length > 0 ? (
         <div className="space-y-4">
-          {filtered.map((review) => (
+          {filtered.map((review: any) => (
             <div key={review.id} className="bg-white rounded-lg border border-stone-200 p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">

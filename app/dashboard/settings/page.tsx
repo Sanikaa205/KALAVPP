@@ -141,7 +141,7 @@ export default function CustomerSettingsPage() {
             <button onClick={() => { setShowAddressForm(true); setEditingAddressId(null); setAddressForm({ label: "", street: "", city: "", state: "", zipCode: "", country: "India", isDefault: false }); }} className="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1"><Plus className="h-3.5 w-3.5" /> Add</button>
           </div>
           <div className="space-y-3">
-            {addresses.map((addr) => (
+            {addresses.map((addr: any) => (
               <div key={addr.id} className="p-4 border border-stone-200 rounded-md flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">

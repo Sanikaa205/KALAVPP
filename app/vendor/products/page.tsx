@@ -63,7 +63,7 @@ export default function VendorProductsPage() {
         <p className="px-4 pt-3 text-xs text-stone-500">{filtered.length} product{filtered.length !== 1 ? "s" : ""}</p>
 
         <div className="divide-y divide-stone-100">
-          {filtered.map((product) => (
+          {filtered.map((product: any) => (
             <div key={product.id} className="p-4 flex items-center gap-4">
               <div className="w-14 h-14 bg-stone-100 rounded-md overflow-hidden flex-shrink-0">
                 {product.images?.[0] ? (

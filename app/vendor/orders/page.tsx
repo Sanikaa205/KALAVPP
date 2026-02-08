@@ -96,7 +96,7 @@ export default function VendorOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {filtered.map((order) => (
+              {filtered.map((order: any) => (
                 <tr key={order.id} className="hover:bg-stone-50">
                   <td className="p-3 font-medium text-stone-900">{order.orderNumber}</td>
                   <td className="p-3 text-stone-600">{order.user?.name || "—"}</td>

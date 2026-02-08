@@ -172,7 +172,7 @@ export default function ArtistProfilePage({ params }: { params: Promise<{ storeS
       {tab === "products" && (
         products.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((p) => (
+            {products.map((p: any) => (
               <Link key={p.id} href={`/shop/${p.slug}`} className="group bg-white rounded-lg border border-stone-200 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="aspect-square bg-stone-100 overflow-hidden">
                   {p.images?.[0] ? (
@@ -200,7 +200,7 @@ export default function ArtistProfilePage({ params }: { params: Promise<{ storeS
       {tab === "services" && (
         services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {services.map((s) => (
+            {services.map((s: any) => (
               <Link key={s.id} href={`/services/${s.slug}`} className="group bg-white rounded-lg border border-stone-200 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="h-40 bg-stone-100 overflow-hidden">
                   {s.images?.[0] ? (
@@ -228,7 +228,7 @@ export default function ArtistProfilePage({ params }: { params: Promise<{ storeS
       {tab === "reviews" && (
         reviews.length > 0 ? (
           <div className="space-y-4">
-            {reviews.map((r) => (
+            {reviews.map((r: any) => (
               <div key={r.id} className="bg-white rounded-lg border border-stone-200 p-5">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-stone-200 flex items-center justify-center text-sm font-bold text-stone-600 overflow-hidden">

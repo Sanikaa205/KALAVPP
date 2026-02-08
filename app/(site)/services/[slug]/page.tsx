@@ -170,7 +170,7 @@ export default function ServiceDetailPage({
             </h2>
             {serviceReviews.length > 0 ? (
               <div className="space-y-6">
-                {serviceReviews.map((review) => (
+                {serviceReviews.map((review: any) => (
                   <div key={review.id} className="border-b border-stone-200 pb-6 last:border-0">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-xs font-medium text-stone-600">

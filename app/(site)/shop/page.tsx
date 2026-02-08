@@ -369,7 +369,7 @@ function ShopContent() {
                   : "space-y-4"
               }
             >
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}
                   product={product}

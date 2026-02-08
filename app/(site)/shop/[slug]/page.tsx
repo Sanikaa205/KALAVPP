@@ -314,7 +314,7 @@ export default function ProductDetailPage({
             Customer Reviews ({productReviews.length})
           </h2>
           <div className="space-y-6">
-            {productReviews.map((review) => (
+            {productReviews.map((review: any) => (
               <div
                 key={review.id}
                 className="border-b border-stone-200 pb-6 last:border-0"

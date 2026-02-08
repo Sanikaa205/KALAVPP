@@ -113,7 +113,7 @@ export default function VendorCommissionsPage() {
       {/* Commission Cards */}
       {filtered.length > 0 ? (
         <div className="space-y-4">
-          {filtered.map((c) => (
+          {filtered.map((c: any) => (
             <div key={c.id} className="bg-white rounded-lg border border-stone-200 p-5">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex-1">

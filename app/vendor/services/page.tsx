@@ -54,7 +54,7 @@ export default function VendorServicesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filtered.map((service) => (
+        {filtered.map((service: any) => (
           <div key={service.id} className="bg-white rounded-lg border border-stone-200 overflow-hidden">
             <div className="h-40 bg-stone-100 relative">
               {service.images?.[0] ? (

@@ -77,7 +77,7 @@ export default function NotificationsPage() {
 
       {notifications.length > 0 ? (
         <div className="space-y-2">
-          {notifications.map((notif) => {
+          {notifications.map((notif: any) => {
             const Icon = TYPE_ICONS[notif.type] || Info;
             return (
               <div

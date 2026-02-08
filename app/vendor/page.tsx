@@ -75,7 +75,7 @@ export default function VendorDashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-stone-100">
-            {orders.slice(0, 5).map((order) => (
+            {orders.slice(0, 5).map((order: any) => (
               <div key={order.id} className="p-4 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-stone-900">{order.orderNumber}</p>
@@ -99,7 +99,7 @@ export default function VendorDashboardPage() {
             <h2 className="font-semibold text-stone-900">Active Commissions</h2>
           </div>
           <div className="divide-y divide-stone-100">
-            {commissions.slice(0, 5).map((c) => (
+            {commissions.slice(0, 5).map((c: any) => (
               <div key={c.id} className="p-4 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-stone-900">{c.service?.title || "Custom Commission"}</p>

@@ -92,7 +92,7 @@ export default function AdminOrdersPage() {
           <div className="text-right">Update Status</div>
         </div>
         <div className="divide-y divide-stone-100">
-          {filtered.map((order) => (
+          {filtered.map((order: any) => (
             <div key={order.id} className="px-5 py-4 md:grid md:grid-cols-7 md:gap-4 md:items-center space-y-2 md:space-y-0">
               <div className="col-span-2 flex items-center gap-3">
                 <div className="p-2 bg-stone-100 rounded-md">

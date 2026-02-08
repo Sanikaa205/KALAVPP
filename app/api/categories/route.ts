@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const categories = await prisma.category.findMany({
     orderBy: { sortOrder: "asc" },

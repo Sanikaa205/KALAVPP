@@ -58,3 +58,42 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ message: "Order placed successfully", order }, { status: 201 });
 }
+
+export async function PATCH(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = session.user as { id: string; role?: string };
+  const body = await request.json();
+  const { orderId, status, paymentStatus } = body;
+
+  if (!orderId) {
+    return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
+  }
+
+  // Only admin and vendor can update order status
+  if (user.role !== "ADMIN" && user.role !== "VENDOR") {
+    // Customers can only cancel their own pending orders
+    if (status !== "CANCELLED") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || order.userId !== user.id || order.status !== "PENDING") {
+      return NextResponse.json({ error: "Cannot cancel this order" }, { status: 403 });
+    }
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (status) updateData.status = status;
+  if (paymentStatus) updateData.paymentStatus = paymentStatus;
+
+  const order = await prisma.order.update({
+    where: { id: orderId },
+    data: updateData,
+    include: { items: true },
+  });
+
+  return NextResponse.json({ message: "Order updated", order });
+}

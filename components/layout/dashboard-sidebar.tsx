@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -168,6 +169,7 @@ export function DashboardSidebar({
       {/* Footer */}
       <div className="border-t border-stone-200 p-2">
         <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
           className={cn(
             "flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors",
             collapsed && "justify-center px-2"

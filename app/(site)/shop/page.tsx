@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { ProductCard } from "@/components/products/product-card";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, Grid3X3, LayoutList, X } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, LayoutList, X, Search } from "lucide-react";
 
 const sortOptions = [
   { value: "newest", label: "Newest First" },
@@ -49,6 +49,7 @@ export default function ShopPage() {
 function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
+  const searchParam = searchParams.get("search");
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -57,6 +58,7 @@ function ShopContent() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || "all");
+  const [searchQuery, setSearchQuery] = useState(searchParam || "");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -73,6 +75,18 @@ function ShopContent() {
 
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
+
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p: any) =>
+          p.title?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.tags?.some((t: string) => t.toLowerCase().includes(q)) ||
+          p.vendor?.storeName?.toLowerCase().includes(q)
+      );
+    }
 
     // Category filter
     if (selectedCategory !== "all") {
@@ -119,12 +133,13 @@ function ShopContent() {
     }
 
     return filtered;
-  }, [products, categories, selectedCategory, typeFilter, priceRange, sort]);
+  }, [products, categories, selectedCategory, typeFilter, priceRange, sort, searchQuery]);
 
   const activeFilterCount = [
     selectedCategory !== "all",
     typeFilter !== "all",
     priceRange !== "all",
+    !!searchQuery,
   ].filter(Boolean).length;
 
   return (
@@ -225,6 +240,7 @@ function ShopContent() {
                   setSelectedCategory("all");
                   setTypeFilter("all");
                   setPriceRange("all");
+                  setSearchQuery("");
                 }}
                 className="text-sm text-amber-700 hover:text-amber-800 font-medium"
               >
@@ -237,6 +253,15 @@ function ShopContent() {
         {/* Product grid area */}
         <div className="flex-1 min-w-0">
           {/* Toolbar */}
+          {searchQuery && (
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-sm text-stone-500">Searching for:</span>
+              <span className="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm font-medium flex items-center gap-1">
+                &quot;{searchQuery}&quot;
+                <button onClick={() => setSearchQuery("")} className="ml-1 text-stone-400 hover:text-stone-700"><X className="h-3 w-3" /></button>
+              </span>
+            </div>
+          )}
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-stone-200">
             <div className="flex items-center gap-3">
               {/* Mobile filter toggle */}
@@ -365,6 +390,7 @@ function ShopContent() {
                   setSelectedCategory("all");
                   setTypeFilter("all");
                   setPriceRange("all");
+                  setSearchQuery("");
                 }}
                 className="mt-4 px-6 py-2 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800"
               >

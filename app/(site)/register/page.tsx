@@ -47,14 +47,45 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Demo: simulate registration
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Auto-sign in after successful registration
+      const { signIn } = await import("next-auth/react");
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        // Registration succeeded but auto-login failed, redirect to login
+        router.push("/login?registered=true");
+        return;
+      }
 
       if (formData.role === "VENDOR") {
         router.push("/vendor");
       } else {
         router.push("/dashboard");
       }
+      router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

@@ -11,7 +11,7 @@ export async function GET() {
   const vendors = await prisma.vendorProfile.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      user: { select: { name: true, email: true, avatar: true } },
+      user: { select: { id: true, name: true, email: true, avatar: true } },
       _count: { select: { products: true, services: true } },
     },
   });
@@ -27,12 +27,22 @@ export async function PATCH(request: NextRequest) {
 
   const { vendorId, action } = await request.json();
 
-  const status = action === "approve" ? "APPROVED" : action === "reject" ? "REJECTED" : "SUSPENDED";
+  if (action === "approve") {
+    await prisma.vendorProfile.update({
+      where: { id: vendorId },
+      data: { status: "APPROVED" },
+    });
+  } else if (action === "reject") {
+    await prisma.vendorProfile.update({
+      where: { id: vendorId },
+      data: { status: "REJECTED" },
+    });
+  } else if (action === "suspend") {
+    await prisma.vendorProfile.update({
+      where: { id: vendorId },
+      data: { status: "SUSPENDED" },
+    });
+  }
 
-  await prisma.vendorProfile.update({
-    where: { id: vendorId },
-    data: { status },
-  });
-
-  return NextResponse.json({ message: `Vendor ${action}d successfully` });
+  return NextResponse.json({ message: `Vendor ${action} successful` });
 }

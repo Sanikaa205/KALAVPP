@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Save, Globe, Palette, Bell, Shield, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, Globe, CreditCard, Shield } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({
@@ -13,6 +13,45 @@ export default function AdminSettingsPage() {
     requireApproval: true,
     maintenanceMode: false,
   });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.settings) {
+          const loaded: Record<string, string> = {};
+          data.settings.forEach((s: { key: string; value: string }) => { loaded[s.key] = s.value; });
+          setSettings((prev) => ({
+            siteName: loaded.siteName || prev.siteName,
+            siteDescription: loaded.siteDescription || prev.siteDescription,
+            contactEmail: loaded.contactEmail || prev.contactEmail,
+            vendorCommission: loaded.vendorCommission || prev.vendorCommission,
+            enableRegistration: loaded.enableRegistration === "false" ? false : prev.enableRegistration,
+            requireApproval: loaded.requireApproval === "false" ? false : prev.requireApproval,
+            maintenanceMode: loaded.maintenanceMode === "true" ? true : prev.maintenanceMode,
+          }));
+        }
+      });
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await fetch("/api/admin/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        settings: Object.entries(settings).map(([key, value]) => ({
+          key,
+          value: String(value),
+        })),
+      }),
+    });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
 
   return (
     <div>
@@ -61,9 +100,7 @@ export default function AdminSettingsPage() {
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
-                Platform Commission (%)
-              </label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Platform Commission (%)</label>
               <input
                 type="number"
                 value={settings.vendorCommission}
@@ -129,9 +166,16 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <button className="flex items-center gap-2 px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800">
-          <Save className="h-4 w-4" /> Save All Settings
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save All Settings"}
+          </button>
+          {saved && <span className="text-sm text-emerald-600 font-medium">Settings saved successfully!</span>}
+        </div>
       </div>
     </div>
   );

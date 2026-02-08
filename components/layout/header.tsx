@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store";
 import {
@@ -35,10 +36,29 @@ const categories = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const itemCount = useCartStore((s) => s.getItemCount());
+  const { data: session } = useSession();
+
+  const userRole = (session?.user as { role?: string })?.role;
+  const accountHref = session?.user
+    ? userRole === "ADMIN" ? "/admin"
+    : userRole === "VENDOR" ? "/vendor"
+    : "/dashboard"
+    : "/login";
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-stone-200">
@@ -132,7 +152,7 @@ export function Header() {
             </button>
 
             <Link
-              href="/wishlist"
+              href="/dashboard/wishlist"
               className="hidden sm:block p-2 text-stone-500 hover:text-stone-900 transition-colors"
               aria-label="Wishlist"
             >
@@ -153,7 +173,7 @@ export function Header() {
             </Link>
 
             <Link
-              href="/login"
+              href={accountHref}
               className="p-2 text-stone-500 hover:text-stone-900 transition-colors"
               aria-label="Account"
             >
@@ -167,21 +187,24 @@ export function Header() {
       {searchOpen && (
         <div className="border-t border-stone-200 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-400" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search artworks, artists, services..."
                 className="w-full pl-12 pr-4 py-3 rounded-lg border border-stone-300 bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400 text-sm"
                 autoFocus
               />
               <button
+                type="button"
                 onClick={() => setSearchOpen(false)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
               >
                 <X className="h-4 w-4" />
               </button>
-            </div>
+            </form>
           </div>
         </div>
       )}

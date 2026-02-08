@@ -29,6 +29,9 @@ export default function ServiceDetailPage({
     budget: "",
     deadline: "",
   });
+  const [commissionLoading, setCommissionLoading] = useState(false);
+  const [commissionMsg, setCommissionMsg] = useState("");
+  const [commissionError, setCommissionError] = useState("");
 
   useEffect(() => {
     fetch(`/api/services/${slug}`)
@@ -286,11 +289,54 @@ export default function ServiceDetailPage({
 
                 <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors"
+                  disabled={commissionLoading}
+                  onClick={async () => {
+                    setCommissionError("");
+                    setCommissionMsg("");
+
+                    if (!commissionForm.description || !commissionForm.budget) {
+                      setCommissionError("Please provide a description and budget.");
+                      return;
+                    }
+
+                    setCommissionLoading(true);
+                    try {
+                      const res = await fetch("/api/commissions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          vendorId: service.vendorId,
+                          serviceId: service.id,
+                          title: `Commission for ${service.title}`,
+                          description: commissionForm.description,
+                          budget: parseFloat(commissionForm.budget),
+                          deadline: commissionForm.deadline || undefined,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        setCommissionError(data.error || "Failed to submit. Please login first.");
+                        return;
+                      }
+                      setCommissionMsg("Commission request submitted! The artist will review it.");
+                      setCommissionForm({ description: "", budget: "", deadline: "" });
+                    } catch {
+                      setCommissionError("Something went wrong. Please try again.");
+                    } finally {
+                      setCommissionLoading(false);
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
-                  Send Commission Request
+                  {commissionLoading ? "Submitting..." : "Send Commission Request"}
                 </button>
+                {commissionMsg && (
+                  <p className="mt-2 text-xs text-emerald-700 bg-emerald-50 p-2 rounded">{commissionMsg}</p>
+                )}
+                {commissionError && (
+                  <p className="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded">{commissionError}</p>
+                )}
               </form>
             </div>
 

@@ -16,6 +16,10 @@ export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCartStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderError, setOrderError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("UPI");
 
   const [shippingData, setShippingData] = useState({
     fullName: "",
@@ -35,10 +39,78 @@ export default function CheckoutPage() {
     setShippingData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handlePlaceOrder = () => {
-    setOrderPlaced(true);
-    setCurrentStep(3);
-    clearCart();
+  const validateShipping = () => {
+    if (!shippingData.fullName || !shippingData.phone || !shippingData.address || !shippingData.city || !shippingData.state || !shippingData.pincode) {
+      setOrderError("Please fill in all shipping fields");
+      return false;
+    }
+    setOrderError("");
+    return true;
+  };
+
+  const handlePlaceOrder = async () => {
+    setOrderError("");
+    setOrderLoading(true);
+
+    try {
+      // First save the address
+      const addrRes = await fetch("/api/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: shippingData.fullName,
+          line1: shippingData.address,
+          city: shippingData.city,
+          state: shippingData.state,
+          postalCode: shippingData.pincode,
+          phone: shippingData.phone,
+          isDefault: true,
+        }),
+      });
+
+      let addressId: string | null = null;
+      if (addrRes.ok) {
+        const addrData = await addrRes.json();
+        addressId = addrData.address?.id || null;
+      }
+
+      // Create the order
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subtotal,
+          shippingCost: shipping,
+          tax,
+          total,
+          paymentMethod,
+          addressId,
+          items: items.map((item) => ({
+            productId: item.productId,
+            title: item.product.title,
+            price: item.product.price,
+            quantity: item.quantity,
+            type: item.product.type || "PHYSICAL",
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setOrderError(data.error || "Failed to place order. Please try again.");
+        return;
+      }
+
+      setOrderNumber(data.order?.orderNumber || "N/A");
+      setOrderPlaced(true);
+      setCurrentStep(3);
+      clearCart();
+    } catch {
+      setOrderError("Something went wrong. Please try again.");
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   if (items.length === 0 && !orderPlaced) {
@@ -65,7 +137,7 @@ export default function CheckoutPage() {
         </div>
         <h1 className="text-2xl font-bold text-stone-900">Order Placed Successfully!</h1>
         <p className="mt-2 text-stone-500">
-          Your order #KVP-{Date.now().toString().slice(-6)} has been confirmed. You will receive an email
+          Your order #{orderNumber} has been confirmed. You will receive an email
           confirmation shortly.
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
@@ -189,12 +261,17 @@ export default function CheckoutPage() {
                   <ArrowLeft className="h-4 w-4" /> Back to Cart
                 </Link>
                 <button
-                  onClick={() => setCurrentStep(2)}
+                  onClick={() => { if (validateShipping()) setCurrentStep(2); }}
                   className="px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800"
                 >
                   Continue to Payment
                 </button>
               </div>
+              {orderError && currentStep === 1 && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-xs text-red-700">{orderError}</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -203,9 +280,9 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold text-stone-900 mb-4">Payment</h2>
               <div className="space-y-4">
                 {/* Payment options */}
-                <div className="border border-stone-900 rounded-lg p-4">
+                <div className="border border-stone-900 rounded-lg p-4 cursor-pointer" onClick={() => setPaymentMethod("UPI")}>
                   <div className="flex items-center gap-3">
-                    <input type="radio" name="payment" defaultChecked className="text-stone-900" />
+                    <input type="radio" name="payment" checked={paymentMethod === "UPI"} onChange={() => setPaymentMethod("UPI")} className="text-stone-900" />
                     <CreditCard className="h-5 w-5 text-stone-600" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">UPI / Cards / NetBanking</p>
@@ -213,9 +290,9 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </div>
-                <div className="border border-stone-200 rounded-lg p-4">
+                <div className="border border-stone-200 rounded-lg p-4 cursor-pointer" onClick={() => setPaymentMethod("COD")}>
                   <div className="flex items-center gap-3">
-                    <input type="radio" name="payment" className="text-stone-900" />
+                    <input type="radio" name="payment" checked={paymentMethod === "COD"} onChange={() => setPaymentMethod("COD")} className="text-stone-900" />
                     <Package className="h-5 w-5 text-stone-600" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">Cash on Delivery</p>
@@ -242,11 +319,17 @@ export default function CheckoutPage() {
                 </button>
                 <button
                   onClick={handlePlaceOrder}
-                  className="px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800"
+                  disabled={orderLoading}
+                  className="px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 disabled:opacity-50"
                 >
-                  Place Order - {formatPrice(total)}
+                  {orderLoading ? "Processing..." : `Place Order - ${formatPrice(total)}`}
                 </button>
               </div>
+              {orderError && currentStep === 2 && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-xs text-red-700">{orderError}</p>
+                </div>
+              )}
             </div>
           )}
         </div>

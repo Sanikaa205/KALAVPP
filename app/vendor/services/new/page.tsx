@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, Plus, X } from "lucide-react";
 
@@ -11,10 +12,14 @@ const serviceTypes = [
 ];
 
 export default function NewServicePage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    serviceType: "PORTRAIT_PAINTING",
+    serviceType: "PORTRAIT",
     basePrice: "",
     deliveryDays: "",
     maxRevisions: "3",
@@ -44,6 +49,45 @@ export default function NewServicePage() {
     }));
   };
 
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          type: formData.serviceType,
+          basePrice: parseFloat(formData.basePrice),
+          deliveryDays: formData.deliveryDays ? parseInt(formData.deliveryDays) : undefined,
+          maxRevisions: parseInt(formData.maxRevisions) || 3,
+          includes: formData.includes.filter((i) => i.trim()),
+          images,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to create service");
+        return;
+      }
+
+      router.push("/vendor/services");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUrl = () => {
+    const url = prompt("Enter image URL:");
+    if (url) setImages([...images, url]);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -56,12 +100,21 @@ export default function NewServicePage() {
           </Link>
           <h1 className="text-2xl font-bold text-stone-900">Create New Service</h1>
         </div>
-        <button className="flex items-center gap-2 px-6 py-2.5 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800">
-          <Save className="h-4 w-4" /> Save Service
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="flex items-center gap-2 px-6 py-2.5 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" /> {loading ? "Saving..." : "Save Service"}
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {error && (
+          <div className="lg:col-span-3 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-lg border border-stone-200 p-6">
             <h2 className="text-base font-semibold text-stone-900 mb-4">Service Details</h2>
@@ -106,12 +159,32 @@ export default function NewServicePage() {
           {/* Portfolio images */}
           <div className="bg-white rounded-lg border border-stone-200 p-6">
             <h2 className="text-base font-semibold text-stone-900 mb-4">Portfolio Images</h2>
+            {images.length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-4">
+                {images.map((img, i) => (
+                  <div key={i} className="relative group">
+                    <img src={img} alt={`Portfolio ${i + 1}`} className="h-20 w-20 object-cover rounded-md border border-stone-200" />
+                    <button
+                      type="button"
+                      onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+                      className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="border-2 border-dashed border-stone-300 rounded-lg p-8 text-center">
               <Upload className="h-8 w-8 text-stone-400 mx-auto mb-3" />
               <p className="text-sm text-stone-600">Upload samples of your past work</p>
-              <p className="text-xs text-stone-400 mt-1">PNG, JPG up to 10MB. Max 6 images.</p>
-              <button className="mt-3 px-4 py-2 border border-stone-300 rounded-md text-sm font-medium text-stone-700 hover:bg-stone-50">
-                Choose Files
+              <p className="text-xs text-stone-400 mt-1">Add image URLs. Max 6 images.</p>
+              <button
+                type="button"
+                onClick={handleImageUrl}
+                className="mt-3 px-4 py-2 border border-stone-300 rounded-md text-sm font-medium text-stone-700 hover:bg-stone-50"
+              >
+                Add Image URL
               </button>
             </div>
           </div>

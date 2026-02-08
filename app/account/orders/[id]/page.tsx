@@ -59,7 +59,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="text-center py-16">
         <p className="text-stone-600">{error || "Order not found"}</p>
-        <Link href="/dashboard/orders" className="mt-4 inline-flex items-center gap-2 text-amber-700 hover:text-amber-800 text-sm font-medium">
+        <Link href="/account/orders" className="mt-4 inline-flex items-center gap-2 text-amber-700 hover:text-amber-800 text-sm font-medium">
           <ArrowLeft className="h-4 w-4" /> Back to Orders
         </Link>
       </div>
@@ -71,7 +71,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div>
-      <Link href="/dashboard/orders" className="inline-flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-6">
+      <Link href="/account/orders" className="inline-flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-6">
         <ArrowLeft className="h-4 w-4" /> Back to Orders
       </Link>
 
@@ -130,7 +130,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <div key={item.id} className="flex gap-4 p-4">
                   <Link href={`/shop/${item.product?.slug || "#"}`} className="w-20 h-20 rounded-md overflow-hidden bg-stone-100 flex-shrink-0">
                     <img
-                      src={item.product?.images?.[0] || "/images/placeholder.jpg"}
+                      src={item.product?.images?.[0] || "/placeholder.svg"}
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />

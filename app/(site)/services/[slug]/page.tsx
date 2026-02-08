@@ -86,7 +86,7 @@ export default function ServiceDetailPage({
           <div className="space-y-4">
             <div className="aspect-[16/10] rounded-lg overflow-hidden bg-stone-100">
               <img
-                src={service.images[selectedImage] || "/images/placeholder.jpg"}
+                src={service.images[selectedImage] || "/placeholder.svg"}
                 alt={service.title}
                 className="w-full h-full object-cover"
               />

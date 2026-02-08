@@ -123,13 +123,16 @@ export default function AdminUsersPage() {
               </div>
               <div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  user.isActive !== false ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                  user.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700"
+                    : user.status === "SUSPENDED" ? "bg-red-50 text-red-700"
+                    : user.status === "DEACTIVATED" ? "bg-stone-100 text-stone-500"
+                    : "bg-amber-50 text-amber-700"
                 }`}>
-                  {user.isActive !== false ? "Active" : "Suspended"}
+                  {user.status || "ACTIVE"}
                 </span>
               </div>
               <div className="flex items-center justify-end gap-2">
-                {user.isActive !== false ? (
+                {user.status !== "SUSPENDED" ? (
                   <button
                     onClick={() => handleAction(user.id, "suspend")}
                     className="p-1.5 text-stone-400 hover:text-red-600"

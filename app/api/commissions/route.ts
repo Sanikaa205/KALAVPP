@@ -12,9 +12,20 @@ export async function GET() {
 
   const user = session.user as { id: string; role?: string };
   const isAdmin = user.role === "ADMIN";
+  const isVendor = user.role === "VENDOR";
+
+  let where: Record<string, unknown> = {};
+  if (isAdmin) {
+    where = {};
+  } else if (isVendor) {
+    const vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id } });
+    where = vendor ? { vendorId: vendor.id } : { vendorId: "__none__" };
+  } else {
+    where = { customerId: user.id };
+  }
 
   const commissions = await prisma.commission.findMany({
-    where: isAdmin ? {} : { customerId: user.id },
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       service: { select: { title: true, slug: true } },

@@ -137,14 +137,14 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {categories.map((category: { id: string; slug: string; name: string; _count: { products: number } }) => (
+          {categories.map((category: { id: string; slug: string; name: string; image?: string | null; _count: { products: number } }) => (
             <Link
               key={category.id}
               href={`/shop?category=${category.slug}`}
               className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-stone-200"
             >
               <img
-                src={`https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80`}
+                src={category.image || "/placeholder.svg"}
                 alt={category.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 loading="lazy"

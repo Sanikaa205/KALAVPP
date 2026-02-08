@@ -12,7 +12,7 @@ export default function VendorProductsPage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
 
   const fetchProducts = () => {
-    fetch("/api/products?limit=100")
+    fetch("/api/vendor/products")
       .then((r) => r.json())
       .then((d) => { setProducts(d.products || []); setLoading(false); })
       .catch(() => setLoading(false));
@@ -76,10 +76,10 @@ export default function VendorProductsPage() {
                 <p className="text-sm font-medium text-stone-900 truncate">{product.title}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded">{product.type}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${product.isActive ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                    {product.isActive ? "Active" : "Draft"}
+                  <span className={`text-xs px-2 py-0.5 rounded ${product.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                    {product.status === "ACTIVE" ? "Active" : product.status === "DRAFT" ? "Draft" : product.status}
                   </span>
-                  {product.stock !== undefined && <span className="text-xs text-stone-400">Stock: {product.stock}</span>}
+                  {product.stockQuantity !== undefined && product.stockQuantity !== null && <span className="text-xs text-stone-400">Stock: {product.stockQuantity}</span>}
                 </div>
               </div>
               <div className="text-right mr-4">

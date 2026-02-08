@@ -31,7 +31,7 @@ export default function VendorCommissionsPage() {
     await fetch("/api/commissions", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ commissionId: id, status }),
     });
     const res = await fetch("/api/commissions");
     const d = await res.json();

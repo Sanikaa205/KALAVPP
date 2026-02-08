@@ -17,7 +17,7 @@ export default function CartPage() {
     useCartStore();
 
   const subtotal = getTotal();
-  const shipping = subtotal > 2000 ? 0 : 200;
+  const shipping = subtotal >= 2000 ? 0 : 200;
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + shipping + tax;
 
@@ -59,7 +59,7 @@ export default function CartPage() {
                 className="w-24 h-24 rounded-md overflow-hidden bg-stone-100 flex-shrink-0"
               >
                 <img
-                  src={item.product.images[0] || "/images/placeholder.jpg"}
+                  src={item.product.images[0] || "/placeholder.svg"}
                   alt={item.product.title}
                   className="w-full h-full object-cover"
                 />

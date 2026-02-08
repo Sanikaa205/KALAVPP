@@ -142,7 +142,7 @@ export default function CheckoutPage() {
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
           <Link
-            href="/dashboard/orders"
+            href="/account/orders"
             className="px-6 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800"
           >
             View Orders
@@ -346,7 +346,7 @@ export default function CheckoutPage() {
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-stone-100 rounded-md overflow-hidden flex-shrink-0">
                     <img
-                      src={item.product.images[0] || "/images/placeholder.jpg"}
+                      src={item.product.images[0] || "/placeholder.svg"}
                       alt={item.product.title}
                       className="w-full h-full object-cover"
                     />

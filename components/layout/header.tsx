@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store";
@@ -23,15 +23,14 @@ const navigation = [
   { name: "About", href: "/about" },
 ];
 
-const categories = [
-  { name: "Original Artworks", href: "/shop?category=original-artworks" },
-  { name: "Prints & Reproductions", href: "/shop?category=prints-reproductions" },
-  { name: "Handcrafted Items", href: "/shop?category=handcrafted-items" },
-  { name: "Digital Art", href: "/shop?category=digital-art" },
-  { name: "Traditional & Tribal", href: "/shop?category=traditional-tribal" },
-  { name: "Sculptures", href: "/shop?category=sculptures-installations" },
-  { name: "Art Merchandise", href: "/shop?category=art-merchandise" },
-  { name: "Books & Stationery", href: "/shop?category=art-books-stationery" },
+const vendorNavigation = [
+  { name: "Dashboard", href: "/vendor" },
+  { name: "About", href: "/about" },
+];
+
+const adminNavigation = [
+  { name: "Dashboard", href: "/admin" },
+  { name: "About", href: "/about" },
 ];
 
 export function Header() {
@@ -41,14 +40,29 @@ export function Header() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<{ name: string; href: string }[]>([]);
   const itemCount = useCartStore((s) => s.getItemCount());
   const { data: session } = useSession();
+
+  // Fetch categories from DB
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        const cats = (data.categories || []).map((c: { name: string; slug: string }) => ({
+          name: c.name,
+          href: `/shop?category=${c.slug}`,
+        }));
+        setCategories(cats);
+      })
+      .catch(() => {});
+  }, []);
 
   const userRole = (session?.user as { role?: string })?.role;
   const accountHref = session?.user
     ? userRole === "ADMIN" ? "/admin"
     : userRole === "VENDOR" ? "/vendor"
-    : "/dashboard"
+    : "/account"
     : "/login";
 
   const handleSearch = (e: React.FormEvent) => {
@@ -60,6 +74,11 @@ export function Header() {
     }
   };
 
+  const isVendor = userRole === "VENDOR";
+  const isAdmin = userRole === "ADMIN";
+  const isCustomerOrGuest = !isVendor && !isAdmin;
+  const activeNavigation = isVendor ? vendorNavigation : isAdmin ? adminNavigation : navigation;
+
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-stone-200">
       {/* Top bar */}
@@ -67,9 +86,11 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <p className="tracking-wide">Free shipping on orders above Rs. 2,000</p>
           <div className="hidden sm:flex items-center gap-4">
-            <Link href="/vendor/register" className="hover:text-white transition-colors">
-              Sell on Kalavpp
-            </Link>
+            {isCustomerOrGuest && (
+              <Link href="/vendor/register" className="hover:text-white transition-colors">
+                Sell on Kalavpp
+              </Link>
+            )}
             <Link href="/about" className="hover:text-white transition-colors">
               About
             </Link>
@@ -97,7 +118,7 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            {navigation.map((item) => (
+            {activeNavigation.map((item) => (
               <div
                 key={item.name}
                 className="relative"
@@ -143,42 +164,65 @@ export function Header() {
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 text-stone-500 hover:text-stone-900 transition-colors"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            {isCustomerOrGuest && (
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="p-2 text-stone-500 hover:text-stone-900 transition-colors"
+                aria-label="Search"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            )}
 
-            <Link
-              href="/dashboard/wishlist"
-              className="hidden sm:block p-2 text-stone-500 hover:text-stone-900 transition-colors"
-              aria-label="Wishlist"
-            >
-              <Heart className="h-5 w-5" />
-            </Link>
+            {isCustomerOrGuest && (
+              <Link
+                href="/account/wishlist"
+                className="hidden sm:block p-2 text-stone-500 hover:text-stone-900 transition-colors"
+                aria-label="Wishlist"
+              >
+                <Heart className="h-5 w-5" />
+              </Link>
+            )}
 
-            <Link
-              href="/cart"
-              className="relative p-2 text-stone-500 hover:text-stone-900 transition-colors"
-              aria-label="Cart"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4.5 w-4.5 flex items-center justify-center rounded-full bg-amber-700 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
+            {isCustomerOrGuest && (
+              <Link
+                href="/cart"
+                className="relative p-2 text-stone-500 hover:text-stone-900 transition-colors"
+                aria-label="Cart"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4.5 w-4.5 flex items-center justify-center rounded-full bg-amber-700 text-white text-[10px] font-bold min-w-[18px] h-[18px]">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
-            <Link
-              href={accountHref}
-              className="p-2 text-stone-500 hover:text-stone-900 transition-colors"
-              aria-label="Account"
-            >
-              <User className="h-5 w-5" />
-            </Link>
+            {session?.user ? (
+              <Link
+                href={accountHref}
+                className="p-2 text-stone-500 hover:text-stone-900 transition-colors"
+                aria-label="Account"
+              >
+                <User className="h-5 w-5" />
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="hidden sm:inline-flex px-4 py-1.5 text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex px-4 py-1.5 text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 rounded-md transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -213,7 +257,7 @@ export function Header() {
       {mobileOpen && (
         <div className="lg:hidden border-t border-stone-200 bg-white">
           <div className="px-4 py-4 space-y-2">
-            {navigation.map((item) => (
+            {activeNavigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -228,30 +272,52 @@ export function Header() {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-2 border-t border-stone-200">
-              <p className="px-3 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                Categories
-              </p>
-              {categories.map((cat) => (
+            {isCustomerOrGuest && (
+              <div className="pt-2 border-t border-stone-200">
+                <p className="px-3 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider">
+                  Categories
+                </p>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.name}
+                    href={cat.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 text-sm text-stone-600 hover:text-stone-900"
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+            {isCustomerOrGuest && (
+              <div className="pt-2 border-t border-stone-200">
                 <Link
-                  key={cat.name}
-                  href={cat.href}
+                  href="/vendor/register"
                   onClick={() => setMobileOpen(false)}
-                  className="block px-3 py-2 text-sm text-stone-600 hover:text-stone-900"
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-amber-700 hover:bg-amber-50"
                 >
-                  {cat.name}
+                  Sell on Kalavpp
                 </Link>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-stone-200">
-              <Link
-                href="/vendor/register"
-                onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 rounded-md text-sm font-medium text-amber-700 hover:bg-amber-50"
-              >
-                Sell on Kalavpp
-              </Link>
-            </div>
+              </div>
+            )}
+            {!session?.user && (
+              <div className="pt-2 border-t border-stone-200 flex flex-col gap-2 px-3">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-2.5 text-center rounded-md text-sm font-medium text-stone-700 border border-stone-300 hover:bg-stone-50"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-2.5 text-center rounded-md text-sm font-medium text-white bg-stone-900 hover:bg-stone-800"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

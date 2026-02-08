@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,19 +34,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Fetch session to determine role-based redirect
-      const sessionRes = await fetch("/api/auth/session");
-      const session = await sessionRes.json();
-      const role = session?.user?.role;
-
-      if (role === "ADMIN") {
-        router.push("/admin");
-      } else if (role === "VENDOR") {
-        router.push("/vendor");
-      } else {
-        router.push("/dashboard");
-      }
-
+      // Redirect to homepage after successful sign in
+      router.push(callbackUrl || "/");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
@@ -55,7 +46,7 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    await signIn("google", { callbackUrl: "/dashboard" });
+    await signIn("google", { callbackUrl: callbackUrl || "/" });
   };
 
   return (
@@ -197,5 +188,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-stone-200 border-t-stone-900 rounded-full" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

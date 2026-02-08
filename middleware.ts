@@ -12,17 +12,14 @@ export async function middleware(request: NextRequest) {
   // Protected routes
   const isAdminRoute = pathname.startsWith("/admin");
   const isVendorRoute = pathname.startsWith("/vendor") && pathname !== "/vendor/register";
-  const isDashboardRoute = pathname.startsWith("/dashboard");
-  const isProtectedRoute = isAdminRoute || isVendorRoute || isDashboardRoute;
+  const isAccountRoute = pathname.startsWith("/account");
+  const isProtectedRoute = isAdminRoute || isVendorRoute || isAccountRoute;
 
   // Auth pages (login/register) - redirect if already logged in
   const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/vendor/register";
 
   if (isAuthPage && token) {
-    const role = token.role as string | undefined;
-    if (role === "ADMIN") return NextResponse.redirect(new URL("/admin", request.url));
-    if (role === "VENDOR") return NextResponse.redirect(new URL("/vendor", request.url));
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   if (isProtectedRoute && !token) {
@@ -46,7 +43,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/vendor/:path*",
-    "/dashboard/:path*",
+    "/account/:path*",
     "/login",
     "/register",
   ],

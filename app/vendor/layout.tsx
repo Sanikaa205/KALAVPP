@@ -9,12 +9,10 @@ export default function VendorDashboardLayout({
 }) {
   return (
     <div className="min-h-screen bg-stone-50">
-      <div className="flex">
-        <DashboardSidebar role="VENDOR" />
-        <main className="flex-1 lg:ml-64">
-          <div className="p-6 lg:p-8">{children}</div>
-        </main>
-      </div>
+      <DashboardSidebar role="VENDOR" />
+      <main className="lg:ml-64">
+        <div className="p-6 lg:p-8">{children}</div>
+      </main>
     </div>
   );
 }

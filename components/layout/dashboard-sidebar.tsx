@@ -21,6 +21,7 @@ import {
   Bell,
   ChevronLeft,
   LogOut,
+  Globe,
 } from "lucide-react";
 import type { UserRole } from "@/types";
 
@@ -48,20 +49,20 @@ const vendorLinks: SidebarLink[] = [
   { name: "Products", href: "/vendor/products", icon: Package },
   { name: "Services", href: "/vendor/services", icon: Brush },
   { name: "Orders", href: "/vendor/orders", icon: ShoppingCart },
+  { name: "Earnings", href: "/vendor/earnings", icon: BarChart3 },
   { name: "Commissions", href: "/vendor/commissions", icon: MessageSquare },
   { name: "Reviews", href: "/vendor/reviews", icon: Star },
   { name: "Settings", href: "/vendor/settings", icon: Settings },
 ];
 
 const customerLinks: SidebarLink[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
-  { name: "Downloads", href: "/dashboard/downloads", icon: Download },
-  { name: "Commissions", href: "/dashboard/commissions", icon: Brush },
-  { name: "Wishlist", href: "/dashboard/wishlist", icon: Star },
-  { name: "Addresses", href: "/dashboard/addresses", icon: FileText },
-  { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "My Account", href: "/account", icon: LayoutDashboard },
+  { name: "Orders", href: "/account/orders", icon: ShoppingCart },
+  { name: "Downloads", href: "/account/downloads", icon: Download },
+  { name: "Wishlist", href: "/account/wishlist", icon: Star },
+  { name: "Addresses", href: "/account/addresses", icon: FileText },
+  { name: "Notifications", href: "/account/notifications", icon: Bell },
+  { name: "Settings", href: "/account/settings", icon: Settings },
 ];
 
 interface DashboardSidebarProps {
@@ -94,7 +95,7 @@ export function DashboardSidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col bg-white border-r border-stone-200 h-full transition-all duration-300",
+        "fixed top-0 left-0 z-30 flex flex-col bg-white border-r border-stone-200 h-screen transition-all duration-300 hidden lg:flex",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -134,7 +135,7 @@ export function DashboardSidebar({
         {links.map((link) => {
           const isActive =
             pathname === link.href ||
-            (link.href !== `/${role.toLowerCase() === "customer" ? "dashboard" : role.toLowerCase()}` &&
+            (link.href !== `/${role === "CUSTOMER" ? "account" : role.toLowerCase()}` &&
               pathname.startsWith(link.href));
 
           return (
@@ -167,9 +168,20 @@ export function DashboardSidebar({
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-stone-200 p-2">
+      <div className="border-t border-stone-200 p-2 space-y-0.5">
+        <Link
+          href="/"
+          className={cn(
+            "flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors",
+            collapsed && "justify-center px-2"
+          )}
+          title={collapsed ? "Go to Website" : undefined}
+        >
+          <Globe className="h-4.5 w-4.5" />
+          {!collapsed && <span>Go to Website</span>}
+        </Link>
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={async () => { try { await signOut({ redirect: false }); window.location.href = "/login"; } catch { /* ignore */ } }}
           className={cn(
             "flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors",
             collapsed && "justify-center px-2"

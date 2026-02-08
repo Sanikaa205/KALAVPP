@@ -126,7 +126,7 @@ export default function ArtistsPage() {
                           className="aspect-square rounded-md overflow-hidden bg-stone-100 group"
                         >
                           <img
-                            src={product.images[0] || "/images/placeholder.jpg"}
+                            src={product.images[0] || "/placeholder.svg"}
                             alt={product.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />

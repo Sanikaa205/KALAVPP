@@ -120,7 +120,7 @@ export default function ServicesPage() {
               {/* Image */}
               <div className="aspect-[16/10] bg-stone-100 overflow-hidden relative">
                 <img
-                  src={service.images[0] || "/images/placeholder.jpg"}
+                  src={service.images[0] || "/placeholder.svg"}
                   alt={service.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />

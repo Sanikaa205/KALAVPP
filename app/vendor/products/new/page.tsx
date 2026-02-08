@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Upload, Save, X } from "lucide-react";
+import { ArrowLeft, Save, X, ImagePlus, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 interface Category {
@@ -13,12 +13,15 @@ interface Category {
 
 export default function NewProductPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [dragActive, setDragActive] = useState(false);
   const [product, setProduct] = useState({
     title: "",
     description: "",
@@ -46,8 +49,98 @@ export default function NewProductPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const target = e.target;
-    const value = target instanceof HTMLInputElement && target.type === "checkbox" ? target.checked : target.value;
+    const value =
+      target instanceof HTMLInputElement && target.type === "checkbox"
+        ? target.checked
+        : target.value;
     setProduct((prev) => ({ ...prev, [target.name]: value }));
+  };
+
+  const uploadFiles = useCallback(async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+    const maxSize = 5 * 1024 * 1024;
+
+    const validFiles = fileArray.filter((file) => {
+      if (!allowedTypes.includes(file.type)) {
+        setError(`${file.name}: Invalid type. Only JPEG, PNG, WebP, GIF, AVIF allowed.`);
+        return false;
+      }
+      if (file.size > maxSize) {
+        setError(`${file.name}: Too large. Maximum 5MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setUploading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      validFiles.forEach((file) => formData.append("files", file));
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Upload failed");
+        return;
+      }
+
+      if (data.urls && data.urls.length > 0) {
+        setImages((prev) => [...prev, ...data.urls]);
+      }
+
+      if (data.errors) {
+        setError(data.errors.join("; "));
+      }
+    } catch {
+      setError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      uploadFiles(e.target.files);
+      e.target.value = "";
+    }
+  };
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        uploadFiles(e.dataTransfer.files);
+      }
+    },
+    [uploadFiles]
+  );
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent, status: string = "ACTIVE") => {
@@ -66,12 +159,17 @@ export default function NewProductPage() {
           type: product.type,
           categoryId: product.categoryId || undefined,
           price: parseFloat(product.price),
-          compareAtPrice: product.compareAtPrice ? parseFloat(product.compareAtPrice) : undefined,
-          stockQuantity: product.type !== "DIGITAL" ? parseInt(product.stockQuantity) : undefined,
+          compareAtPrice: product.compareAtPrice
+            ? parseFloat(product.compareAtPrice)
+            : undefined,
+          stockQuantity:
+            product.type !== "DIGITAL" ? parseInt(product.stockQuantity) : undefined,
           medium: product.medium || undefined,
           style: product.style || undefined,
           artDimensions: product.artDimensions || undefined,
-          yearCreated: product.yearCreated ? parseInt(product.yearCreated) : undefined,
+          yearCreated: product.yearCreated
+            ? parseInt(product.yearCreated)
+            : undefined,
           isOriginal: product.isOriginal,
           images,
           tags,
@@ -99,11 +197,6 @@ export default function NewProductPage() {
       setTags([...tags, tag]);
       setTagInput("");
     }
-  };
-
-  const handleImageUrl = () => {
-    const url = prompt("Enter image URL:");
-    if (url) setImages([...images, url]);
   };
 
   return (
@@ -279,18 +372,28 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        {/* Images */}
+        {/* Images - Drag & Drop Upload */}
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <h2 className="text-base font-semibold text-stone-900 mb-4">Images</h2>
+
           {images.length > 0 && (
-            <div className="flex flex-wrap gap-3 mb-4">
+            <div className="grid grid-cols-4 gap-3 mb-4">
               {images.map((img, i) => (
-                <div key={i} className="relative group">
-                  <img src={img} alt={`Product ${i + 1}`} className="h-20 w-20 object-cover rounded-md border border-stone-200" />
+                <div key={i} className="relative group aspect-square">
+                  <img
+                    src={img}
+                    alt={`Product ${i + 1}`}
+                    className="w-full h-full object-cover rounded-lg border border-stone-200"
+                  />
+                  {i === 0 && (
+                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-stone-900 text-white text-[10px] font-medium rounded">
+                      Cover
+                    </span>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeImage(i)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -298,21 +401,47 @@ export default function NewProductPage() {
               ))}
             </div>
           )}
-          <div className="border-2 border-dashed border-stone-300 rounded-lg p-8 text-center">
-            <Upload className="h-8 w-8 text-stone-400 mx-auto mb-2" />
-            <p className="text-sm text-stone-600">
-              Add product images via URL
-            </p>
-            <p className="text-xs text-stone-400 mt-1">
-              First image will be the cover.
-            </p>
-            <button
-              type="button"
-              onClick={handleImageUrl}
-              className="mt-3 px-4 py-2 border border-stone-300 rounded-md text-xs font-medium text-stone-700 hover:bg-stone-50"
-            >
-              Add Image URL
-            </button>
+
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              dragActive
+                ? "border-amber-500 bg-amber-50"
+                : "border-stone-300 hover:border-stone-400 hover:bg-stone-50"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {uploading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-8 w-8 text-amber-600 animate-spin mb-2" />
+                <p className="text-sm text-stone-600 font-medium">Uploading images...</p>
+              </div>
+            ) : (
+              <>
+                <ImagePlus className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+                <p className="text-sm font-medium text-stone-700">
+                  Click to upload or drag & drop
+                </p>
+                <p className="text-xs text-stone-400 mt-1">
+                  JPEG, PNG, WebP, GIF or AVIF (max 5MB each)
+                </p>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  First image will be the cover photo
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -321,9 +450,16 @@ export default function NewProductPage() {
           <h2 className="text-base font-semibold text-stone-900 mb-4">Tags</h2>
           <div className="flex flex-wrap gap-2 mb-3">
             {tags.map((tag) => (
-              <span key={tag} className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-full text-xs text-stone-700">
+              <span
+                key={tag}
+                className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 rounded-full text-xs text-stone-700"
+              >
                 {tag}
-                <button type="button" onClick={() => setTags(tags.filter((t) => t !== tag))} className="text-stone-400 hover:text-stone-700">
+                <button
+                  type="button"
+                  onClick={() => setTags(tags.filter((t) => t !== tag))}
+                  className="text-stone-400 hover:text-stone-700"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -337,7 +473,11 @@ export default function NewProductPage() {
               placeholder="Add a tag"
               className="flex-1 px-4 py-2 rounded-md border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
-            <button type="button" onClick={handleAddTag} className="px-4 py-2 bg-stone-100 rounded-md text-sm text-stone-700 hover:bg-stone-200">
+            <button
+              type="button"
+              onClick={handleAddTag}
+              className="px-4 py-2 bg-stone-100 rounded-md text-sm text-stone-700 hover:bg-stone-200"
+            >
               Add
             </button>
           </div>
@@ -347,7 +487,7 @@ export default function NewProductPage() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploading}
             className="flex items-center gap-2 px-8 py-3 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
@@ -355,7 +495,7 @@ export default function NewProductPage() {
           </button>
           <button
             type="button"
-            disabled={loading}
+            disabled={loading || uploading}
             onClick={(e) => handleSubmit(e, "DRAFT")}
             className="px-8 py-3 border border-stone-300 text-stone-700 rounded-md text-sm font-medium hover:bg-stone-50 disabled:opacity-50"
           >

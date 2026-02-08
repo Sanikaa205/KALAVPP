@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
-import { Eye, CheckCircle2, XCircle, Search, Star } from "lucide-react";
+import { Eye, CheckCircle2, XCircle, Search, Star, Ban } from "lucide-react";
 
 interface Vendor {
   id: string;
   storeName: string;
   totalSales: number;
   rating: number;
-  isVerified: boolean;
+  status: string;
   createdAt: string;
   user: { id: string; name: string; email: string };
   _count: { products: number; services: number };
@@ -29,20 +29,11 @@ export default function AdminVendorsPage() {
 
   useEffect(() => { fetchVendors(); }, []);
 
-  const handleApprove = async (vendorId: string) => {
+  const handleAction = async (vendorId: string, action: string) => {
     await fetch("/api/admin/vendors", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vendorId, action: "verify" }),
-    });
-    fetchVendors();
-  };
-
-  const handleReject = async (userId: string) => {
-    await fetch("/api/admin/users", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, action: "suspend" }),
+      body: JSON.stringify({ vendorId, action }),
     });
     fetchVendors();
   };
@@ -53,14 +44,15 @@ export default function AdminVendorsPage() {
       v.user.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activeCount = vendors.filter((v) => v.isVerified).length;
-  const pendingCount = vendors.filter((v) => !v.isVerified).length;
+  const approvedCount = vendors.filter((v) => v.status === "APPROVED").length;
+  const pendingCount = vendors.filter((v) => v.status === "PENDING").length;
+  const rejectedCount = vendors.filter((v) => v.status === "REJECTED").length;
 
   const stats = [
     { label: "Total Vendors", value: vendors.length.toString() },
-    { label: "Verified", value: activeCount.toString() },
-    { label: "Pending Approval", value: pendingCount.toString() },
-    { label: "Total Revenue", value: formatPrice(vendors.reduce((s, v) => s + v.totalSales, 0)) },
+    { label: "Approved", value: approvedCount.toString() },
+    { label: "Pending", value: pendingCount.toString() },
+    { label: "Rejected", value: rejectedCount.toString() },
   ];
 
   if (loading) {
@@ -127,9 +119,12 @@ export default function AdminVendorsPage() {
               </div>
               <div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  vendor.isVerified ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                  vendor.status === "APPROVED" ? "bg-emerald-50 text-emerald-700"
+                    : vendor.status === "PENDING" ? "bg-amber-50 text-amber-700"
+                    : vendor.status === "REJECTED" ? "bg-red-50 text-red-700"
+                    : "bg-stone-100 text-stone-600"
                 }`}>
-                  {vendor.isVerified ? "Verified" : "Pending"}
+                  {vendor.status}
                 </span>
               </div>
               <div className="text-sm text-stone-600">
@@ -137,15 +132,25 @@ export default function AdminVendorsPage() {
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button className="p-1.5 text-stone-400 hover:text-stone-900" title="View"><Eye className="h-4 w-4" /></button>
-                {!vendor.isVerified && (
+                {vendor.status === "PENDING" && (
                   <>
-                    <button onClick={() => handleApprove(vendor.id)} className="p-1.5 text-stone-400 hover:text-emerald-600" title="Approve">
+                    <button onClick={() => handleAction(vendor.id, "approve")} className="p-1.5 text-stone-400 hover:text-emerald-600" title="Approve">
                       <CheckCircle2 className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleReject(vendor.user.id)} className="p-1.5 text-stone-400 hover:text-red-600" title="Reject">
+                    <button onClick={() => handleAction(vendor.id, "reject")} className="p-1.5 text-stone-400 hover:text-red-600" title="Reject">
                       <XCircle className="h-4 w-4" />
                     </button>
                   </>
+                )}
+                {vendor.status === "APPROVED" && (
+                  <button onClick={() => handleAction(vendor.id, "suspend")} className="p-1.5 text-stone-400 hover:text-red-600" title="Suspend">
+                    <Ban className="h-4 w-4" />
+                  </button>
+                )}
+                {vendor.status === "SUSPENDED" && (
+                  <button onClick={() => handleAction(vendor.id, "approve")} className="p-1.5 text-stone-400 hover:text-emerald-600" title="Re-approve">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </button>
                 )}
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
-import { Search, Eye, Trash2 } from "lucide-react";
+import { Search, Eye, Trash2, CheckCircle2, Archive } from "lucide-react";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,7 +12,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchProducts = () => {
-    fetch("/api/products?limit=100")
+    fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data) => { setProducts(data.products || []); setLoading(false); })
       .catch(() => setLoading(false));
@@ -20,9 +20,18 @@ export default function AdminProductsPage() {
 
   useEffect(() => { fetchProducts(); }, []);
 
+  const handleAction = async (productId: string, action: string) => {
+    await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId, action }),
+    });
+    fetchProducts();
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this product?")) return;
-    await fetch(`/api/products?id=${id}`, { method: "DELETE" });
+    await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
     fetchProducts();
   };
 
@@ -117,10 +126,19 @@ export default function AdminProductsPage() {
               </div>
               <div className="text-sm text-stone-600">{product.rating}/5</div>
               <div className="flex items-center justify-end gap-1">
-                <button onClick={() => window.open(`/shop/${product.slug}`, "_blank")} className="p-1.5 text-stone-400 hover:text-stone-900">
+                <button onClick={() => window.open(`/shop/${product.slug}`, "_blank")} className="p-1.5 text-stone-400 hover:text-stone-900" title="View">
                   <Eye className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleDelete(product.id)} className="p-1.5 text-stone-400 hover:text-red-600">
+                {!product.isActive ? (
+                  <button onClick={() => handleAction(product.id, "approve")} className="p-1.5 text-stone-400 hover:text-emerald-600" title="Approve (Activate)">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button onClick={() => handleAction(product.id, "archive")} className="p-1.5 text-stone-400 hover:text-amber-600" title="Archive (Deactivate)">
+                    <Archive className="h-4 w-4" />
+                  </button>
+                )}
+                <button onClick={() => handleDelete(product.id)} className="p-1.5 text-stone-400 hover:text-red-600" title="Delete">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>

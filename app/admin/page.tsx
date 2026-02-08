@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Activity,
   Store,
+  Download,
 } from "lucide-react";
 
 interface DashboardData {
@@ -69,11 +70,27 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-stone-900">Admin Dashboard</h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Platform overview and management.
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Admin Dashboard</h1>
+          <p className="mt-1 text-sm text-stone-500">
+            Platform overview and management.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/admin/export?type=orders"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            <Download className="h-4 w-4" /> Export Orders
+          </a>
+          <a
+            href="/api/admin/export?type=commissions"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            <Download className="h-4 w-4" /> Export Commissions
+          </a>
+        </div>
       </div>
 
       {/* Stats */}

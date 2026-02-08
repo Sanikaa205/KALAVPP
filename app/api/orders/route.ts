@@ -14,12 +14,29 @@ export async function GET() {
   const isAdmin = user.role === "ADMIN";
   const isVendor = user.role === "VENDOR";
 
+  let whereClause: any = { userId: user.id };
+
+  if (isAdmin) {
+    whereClause = {};
+  } else if (isVendor) {
+    // Vendors only see orders that contain items from their products
+    const vendorProfile = await prisma.vendorProfile.findUnique({
+      where: { userId: user.id },
+    });
+    if (!vendorProfile) {
+      return NextResponse.json({ orders: [] });
+    }
+    whereClause = {
+      items: { some: { product: { vendorId: vendorProfile.id } } },
+    };
+  }
+
   const orders = await prisma.order.findMany({
-    where: isAdmin || isVendor ? {} : { userId: user.id },
+    where: whereClause,
     orderBy: { createdAt: "desc" },
     include: {
       user: { select: { name: true, email: true } },
-      items: { include: { product: { select: { images: true, slug: true } } } },
+      items: { include: { product: { select: { images: true, slug: true, vendorId: true } } } },
     },
   });
 

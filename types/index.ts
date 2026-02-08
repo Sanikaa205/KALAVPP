@@ -118,7 +118,6 @@ export interface Order {
   shippingCost: number;
   tax: number;
   total: number;
-  totalAmount?: number;
   currency: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;

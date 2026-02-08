@@ -11,7 +11,7 @@ export default function VendorServicesPage() {
   const [search, setSearch] = useState("");
 
   const fetchServices = () => {
-    fetch("/api/services")
+    fetch("/api/vendor/services")
       .then((r) => r.json())
       .then((d) => { setServices(d.services || []); setLoading(false); })
       .catch(() => setLoading(false));

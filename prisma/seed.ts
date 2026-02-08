@@ -68,14 +68,14 @@ async function main() {
   await client.query(`
     INSERT INTO "Category" (id, name, slug, description, image, "sortOrder", "createdAt")
     VALUES 
-      ('cat_1', 'Original Artworks', 'original-artworks', 'One-of-a-kind paintings and artworks', '/images/categories/original.jpg', 1, NOW()),
-      ('cat_2', 'Prints & Reproductions', 'prints-reproductions', 'High-quality prints of popular artworks', '/images/categories/prints.jpg', 2, NOW()),
-      ('cat_3', 'Handcrafted Items', 'handcrafted-items', 'Handmade crafts and artisan products', '/images/categories/handcrafted.jpg', 3, NOW()),
-      ('cat_4', 'Digital Art', 'digital-art', 'Digital illustrations and downloads', '/images/categories/digital.jpg', 4, NOW()),
-      ('cat_5', 'Traditional & Tribal', 'traditional-tribal', 'Traditional Indian art forms', '/images/categories/traditional.jpg', 5, NOW()),
-      ('cat_6', 'Sculptures & Installations', 'sculptures-installations', '3D art and sculptures', '/images/categories/sculptures.jpg', 6, NOW()),
-      ('cat_7', 'Art Merchandise', 'art-merchandise', 'Art-inspired products', '/images/categories/merchandise.jpg', 7, NOW()),
-      ('cat_8', 'Art Books & Stationery', 'art-books-stationery', 'Books, journals, and art supplies', '/images/categories/books.jpg', 8, NOW());
+      ('cat_1', 'Original Artworks', 'original-artworks', 'One-of-a-kind paintings and artworks', 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80', 1, NOW()),
+      ('cat_2', 'Prints & Reproductions', 'prints-reproductions', 'High-quality prints of popular artworks', 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&q=80', 2, NOW()),
+      ('cat_3', 'Handcrafted Items', 'handcrafted-items', 'Handmade crafts and artisan products', 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=600&q=80', 3, NOW()),
+      ('cat_4', 'Digital Art', 'digital-art', 'Digital illustrations and downloads', 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&q=80', 4, NOW()),
+      ('cat_5', 'Traditional & Tribal', 'traditional-tribal', 'Traditional Indian art forms', 'https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?w=600&q=80', 5, NOW()),
+      ('cat_6', 'Sculptures & Installations', 'sculptures-installations', '3D art and sculptures', 'https://images.unsplash.com/photo-1544413660-299165566b1d?w=600&q=80', 6, NOW()),
+      ('cat_7', 'Art Merchandise', 'art-merchandise', 'Art-inspired products', 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=600&q=80', 7, NOW()),
+      ('cat_8', 'Art Books & Stationery', 'art-books-stationery', 'Books, journals, and art supplies', 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&q=80', 8, NOW());
   `);
   console.log("✅ Created 8 categories");
 
@@ -85,35 +85,35 @@ async function main() {
     VALUES 
       ('prod_1', 'vp_1', 'cat_1', 'Sunset Over Mumbai', 'sunset-over-mumbai',
        'A breathtaking oil painting capturing the golden hour over Mumbai''s iconic skyline.', 'Oil painting of Mumbai sunset', 'PHYSICAL', 'ACTIVE', 15000, 20000,
-       ARRAY['/images/products/sunset-mumbai.jpg'], ARRAY['oil painting', 'mumbai', 'sunset'],
+       ARRAY['https://images.unsplash.com/photo-1573455494060-c5595004fb6c?w=800&q=80'], ARRAY['oil painting', 'mumbai', 'sunset'],
        true, 4.8, 3, 1, 'ART-001', 'Oil on Canvas', 'Impressionism', '24x36 inches', 2025, true, NOW(), NOW()),
       ('prod_2', 'vp_1', 'cat_1', 'Abstract Emotions', 'abstract-emotions',
        'A vibrant abstract painting exploring human emotions through bold color combinations.', 'Abstract acrylic painting', 'PHYSICAL', 'ACTIVE', 12000, NULL,
-       ARRAY['/images/products/abstract-emotions.jpg'], ARRAY['abstract', 'modern', 'acrylic'],
+       ARRAY['https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80'], ARRAY['abstract', 'modern', 'acrylic'],
        true, 4.5, 2, 1, 'ART-002', 'Acrylic on Canvas', 'Abstract', '30x30 inches', 2025, true, NOW(), NOW()),
       ('prod_3', 'vp_2', 'cat_4', 'Digital Portrait Pack', 'digital-portrait-pack',
        'A stunning collection of 5 high-resolution digital portraits.', '5 digital portraits', 'DIGITAL', 'ACTIVE', 2500, 3500,
-       ARRAY['/images/products/digital-portraits.jpg'], ARRAY['digital', 'portraits', 'download'],
+       ARRAY['https://images.unsplash.com/photo-1634926878768-2a5b3c42f139?w=800&q=80'], ARRAY['digital', 'portraits', 'download'],
        true, 4.7, 5, 999, 'DIG-001', NULL, 'Digital Art', NULL, 2025, false, NOW(), NOW()),
       ('prod_4', 'vp_3', 'cat_5', 'Tanjore Krishna', 'tanjore-krishna',
        'An exquisite Tanjore painting of Lord Krishna with 22-carat gold foil work.', 'Traditional Tanjore painting', 'PHYSICAL', 'ACTIVE', 35000, 45000,
-       ARRAY['/images/products/tanjore-krishna.jpg'], ARRAY['tanjore', 'traditional', 'krishna'],
+       ARRAY['https://images.unsplash.com/photo-1604871000636-074fa5117945?w=800&q=80'], ARRAY['tanjore', 'traditional', 'krishna'],
        true, 5.0, 4, 1, 'TRD-001', 'Gold foil, Semi-precious stones', 'Tanjore', '18x24 inches', 2024, true, NOW(), NOW()),
       ('prod_5', 'vp_2', 'cat_2', 'Mumbai Local Series', 'mumbai-local-series',
        'Set of 4 vibrant art prints depicting Mumbai''s local trains.', 'Set of 4 premium art prints', 'PHYSICAL', 'ACTIVE', 3500, 5000,
-       ARRAY['/images/products/mumbai-local.jpg'], ARRAY['prints', 'mumbai', 'trains'],
+       ARRAY['https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=800&q=80'], ARRAY['prints', 'mumbai', 'trains'],
        false, 4.3, 6, 50, 'PRT-001', 'Archival Print', 'Pop Art', '12x16 inches each', 2025, false, NOW(), NOW()),
       ('prod_6', 'vp_1', 'cat_3', 'Hand-Painted Ceramic Vase', 'hand-painted-ceramic-vase',
        'Beautifully hand-painted ceramic vase with Madhubani motifs.', 'Handcrafted ceramic vase', 'PHYSICAL', 'ACTIVE', 4500, NULL,
-       ARRAY['/images/products/ceramic-vase.jpg'], ARRAY['ceramic', 'handcrafted', 'madhubani'],
+       ARRAY['https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&q=80'], ARRAY['ceramic', 'handcrafted', 'madhubani'],
        false, 4.6, 2, 5, 'HND-001', 'Ceramic', 'Madhubani', '10 inches height', 2025, true, NOW(), NOW()),
       ('prod_7', 'vp_3', 'cat_6', 'Dancing Nataraja Bronze', 'dancing-nataraja-bronze',
        'Bronze sculpture of Lord Nataraja using lost wax technique.', 'Bronze Nataraja sculpture', 'PHYSICAL', 'ACTIVE', 28000, 35000,
-       ARRAY['/images/products/nataraja.jpg'], ARRAY['bronze', 'sculpture', 'nataraja'],
+       ARRAY['https://images.unsplash.com/photo-1588783898900-7a2db9c60837?w=800&q=80'], ARRAY['bronze', 'sculpture', 'nataraja'],
        true, 4.9, 3, 2, 'SCL-001', 'Bronze', 'Traditional', '12 inches height', 2024, true, NOW(), NOW()),
       ('prod_8', 'vp_2', 'cat_7', 'Art Tote Bag - Warli', 'art-tote-bag-warli',
        'Canvas tote bag featuring authentic Warli art design.', 'Canvas tote with Warli art', 'MERCHANDISE', 'ACTIVE', 899, 1200,
-       ARRAY['/images/products/tote-warli.jpg'], ARRAY['tote bag', 'warli', 'merchandise'],
+       ARRAY['https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=80'], ARRAY['tote bag', 'warli', 'merchandise'],
        false, 4.4, 8, 100, 'MRC-001', 'Canvas', 'Warli', NULL, 2025, false, NOW(), NOW());
   `);
   console.log("✅ Created 8 products");
@@ -123,17 +123,17 @@ async function main() {
     INSERT INTO "Service" (id, "vendorId", title, slug, description, type, "basePrice", "deliveryDays", images, "isActive", "createdAt", "updatedAt")
     VALUES 
       ('svc_1', 'vp_1', 'Custom Portrait Painting', 'custom-portrait-painting',
-       'Get a personalized oil or acrylic painting portrait from your photo.', 'PORTRAIT', 8000, 14, ARRAY['/images/services/portrait.jpg'], true, NOW(), NOW()),
+       'Get a personalized oil or acrylic painting portrait from your photo.', 'PORTRAIT', 8000, 14, ARRAY['https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=800&q=80'], true, NOW(), NOW()),
       ('svc_2', 'vp_2', 'Logo & Brand Design', 'logo-brand-design',
-       'Professional logo and brand identity design. Includes 3 concepts.', 'BRANDING', 5000, 7, ARRAY['/images/services/branding.jpg'], true, NOW(), NOW()),
+       'Professional logo and brand identity design. Includes 3 concepts.', 'BRANDING', 5000, 7, ARRAY['https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&q=80'], true, NOW(), NOW()),
       ('svc_3', 'vp_3', 'Custom Tanjore Painting', 'custom-tanjore-painting',
-       'Commission a custom Tanjore painting with real gold foil.', 'CUSTOM', 25000, 30, ARRAY['/images/services/tanjore.jpg'], true, NOW(), NOW()),
+       'Commission a custom Tanjore painting with real gold foil.', 'CUSTOM', 25000, 30, ARRAY['https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?w=800&q=80'], true, NOW(), NOW()),
       ('svc_4', 'vp_1', 'Wall Mural Painting', 'wall-mural-painting',
-       'Transform your space with a custom wall mural.', 'MURAL', 15000, 21, ARRAY['/images/services/mural.jpg'], true, NOW(), NOW()),
+       'Transform your space with a custom wall mural.', 'MURAL', 15000, 21, ARRAY['https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=800&q=80'], true, NOW(), NOW()),
       ('svc_5', 'vp_2', 'Book Cover Illustration', 'book-cover-illustration',
-       'Custom book cover illustration and design.', 'BOOK_COVER', 7000, 10, ARRAY['/images/services/book-cover.jpg'], true, NOW(), NOW()),
+       'Custom book cover illustration and design.', 'BOOK_COVER', 7000, 10, ARRAY['https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800&q=80'], true, NOW(), NOW()),
       ('svc_6', 'vp_3', 'Art Consultancy', 'art-consultancy',
-       'Professional art consultancy for interior decoration and collections.', 'CONSULTANCY', 3000, 3, ARRAY['/images/services/consultancy.jpg'], true, NOW(), NOW());
+       'Professional art consultancy for interior decoration and collections.', 'CONSULTANCY', 3000, 3, ARRAY['https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80'], true, NOW(), NOW());
   `);
   console.log("✅ Created 6 services");
 

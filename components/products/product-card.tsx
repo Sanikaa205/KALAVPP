@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/lib/store";
+import { useWishlistStore } from "@/lib/wishlist-store";
+import { toast } from "@/components/ui/toast";
 import type { Product } from "@/types";
 import { StarRating } from "@/components/ui/star-rating";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +18,12 @@ interface ProductCardProps {
 
 export function ProductCard({ product, variant = "default" }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const { toggleWishlist, isWishlisted, isToggling, fetchWishlist } = useWishlistStore();
+  const wishlisted = isWishlisted(product.id);
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const typeLabel =
     product.type === "DIGITAL"
@@ -35,7 +44,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
       <div className="flex gap-4 bg-white rounded-lg border border-stone-200 overflow-hidden hover:shadow-md transition-shadow">
         <Link href={`/shop/${product.slug}`} className="w-40 h-40 flex-shrink-0">
           <img
-            src={product.images[0] || "/images/placeholder.jpg"}
+            src={product.images[0] || "/placeholder.svg"}
             alt={product.title}
             className="w-full h-full object-cover"
             loading="lazy"
@@ -86,7 +95,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
       <div className="group bg-white rounded-lg border border-stone-200 overflow-hidden hover:shadow-md transition-shadow">
         <Link href={`/shop/${product.slug}`} className="block aspect-square overflow-hidden">
           <img
-            src={product.images[0] || "/images/placeholder.jpg"}
+            src={product.images[0] || "/placeholder.svg"}
             alt={product.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -113,7 +122,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
       <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
         <Link href={`/shop/${product.slug}`}>
           <img
-            src={product.images[0] || "/images/placeholder.jpg"}
+            src={product.images[0] || "/placeholder.svg"}
             alt={product.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             loading="lazy"
@@ -144,14 +153,26 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
             onClick={(e) => {
               e.preventDefault();
               addItem(product);
+              toast("Added to cart", "success", "cart");
             }}
             className="flex-1 flex items-center justify-center gap-2 bg-white text-stone-900 rounded-md py-2 text-xs font-medium hover:bg-stone-100 transition-colors"
           >
             <ShoppingBag className="h-3.5 w-3.5" />
             Add to Cart
           </button>
-          <button className="p-2 bg-white text-stone-600 rounded-md hover:text-red-500 hover:bg-red-50 transition-colors">
-            <Heart className="h-3.5 w-3.5" />
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              toggleWishlist(product.id);
+            }}
+            disabled={isToggling(product.id)}
+            className={`p-2 rounded-md transition-colors ${
+              wishlisted
+                ? "bg-red-50 text-red-500"
+                : "bg-white text-stone-600 hover:text-red-500 hover:bg-red-50"
+            }`}
+          >
+            <Heart className={`h-3.5 w-3.5 ${wishlisted ? "fill-current" : ""}`} />
           </button>
           <Link
             href={`/shop/${product.slug}`}

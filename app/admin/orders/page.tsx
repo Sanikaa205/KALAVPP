@@ -118,7 +118,7 @@ export default function AdminOrdersPage() {
                   {order.status}
                 </span>
               </div>
-              <div className="text-sm font-bold text-stone-900">{formatPrice(order.totalAmount || order.total)}</div>
+              <div className="text-sm font-bold text-stone-900">{formatPrice(order.total)}</div>
               <div className="flex items-center justify-end">
                 <select
                   value={order.status}

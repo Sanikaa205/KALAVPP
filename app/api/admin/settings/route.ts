@@ -11,12 +11,8 @@ export async function GET() {
   }
 
   const settings = await prisma.siteSetting.findMany();
-  const settingsMap: Record<string, unknown> = {};
-  settings.forEach((s) => {
-    settingsMap[s.key] = s.value;
-  });
 
-  return NextResponse.json({ settings: settingsMap });
+  return NextResponse.json({ settings });
 }
 
 export async function PUT(request: NextRequest) {
@@ -26,13 +22,14 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json();
+  const settingsArray = body.settings || [];
 
-  // Upsert each setting
-  const updates = Object.entries(body).map(([key, value]) =>
+  // Upsert each setting from array format [{key, value}]
+  const updates = settingsArray.map((s: { key: string; value: string }) =>
     prisma.siteSetting.upsert({
-      where: { key },
-      update: { value: JSON.parse(JSON.stringify(value)) },
-      create: { key, value: JSON.parse(JSON.stringify(value)) },
+      where: { key: s.key },
+      update: { value: s.value },
+      create: { key: s.key, value: s.value },
     })
   );
 

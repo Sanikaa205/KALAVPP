@@ -3,28 +3,31 @@
 import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
-import { Package, ShoppingBag, Brush, ArrowRight, Eye, IndianRupee } from "lucide-react";
+import { Package, ShoppingBag, Brush, ArrowRight, Eye, IndianRupee, AlertTriangle, XCircle, Clock } from "lucide-react";
 
 export default function VendorDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [vendorStatus, setVendorStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/orders").then((r) => r.json()),
       fetch("/api/commissions").then((r) => r.json()),
-      fetch("/api/products?limit=4").then((r) => r.json()),
-    ]).then(([ordData, comData, prodData]) => {
+      fetch("/api/vendor/products?limit=4").then((r) => r.json()),
+      fetch("/api/vendor/profile").then((r) => r.json()),
+    ]).then(([ordData, comData, prodData, sessionData]) => {
       setOrders(ordData.orders || []);
       setCommissions(comData.commissions || []);
       setProducts(prodData.products || []);
+      setVendorStatus(sessionData?.vendorProfile?.status || null);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
-  const totalRevenue = orders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
+  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
   const activeCommissions = commissions.filter((c) => ["ACCEPTED", "IN_PROGRESS"].includes(c.status)).length;
 
   const stats = [
@@ -44,6 +47,35 @@ export default function VendorDashboardPage() {
 
   return (
     <div>
+      {/* Vendor Approval Banners */}
+      {vendorStatus === "PENDING" && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+          <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-amber-800">Account Pending Approval</h3>
+            <p className="text-sm text-amber-700 mt-1">Your vendor account is under review. You&apos;ll be able to list products and receive orders once approved by the admin team.</p>
+          </div>
+        </div>
+      )}
+      {vendorStatus === "REJECTED" && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-red-800">Account Rejected</h3>
+            <p className="text-sm text-red-700 mt-1">Your vendor application was not approved. Please contact support at support@kalavpp.com for more details.</p>
+          </div>
+        </div>
+      )}
+      {vendorStatus === "SUSPENDED" && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-red-800">Account Suspended</h3>
+            <p className="text-sm text-red-700 mt-1">Your vendor account has been suspended. Please contact support at support@kalavpp.com.</p>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-stone-900">Vendor Dashboard</h1>
         <p className="mt-1 text-sm text-stone-500">Manage your store, products, and commissions.</p>
@@ -82,7 +114,7 @@ export default function VendorDashboardPage() {
                   <p className="text-xs text-stone-500">{order.user?.name || "Customer"}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-stone-900">{formatPrice(order.totalAmount || order.total)}</p>
+                  <p className="text-sm font-bold text-stone-900">{formatPrice(order.total)}</p>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     order.status === "DELIVERED" ? "bg-emerald-50 text-emerald-700" : "bg-stone-100 text-stone-600"
                   }`}>{order.status}</span>

@@ -3,6 +3,8 @@
 import { use, useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/lib/store";
+import { useWishlistStore } from "@/lib/wishlist-store";
+import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/ui/star-rating";
 import { ProductCard } from "@/components/products/product-card";
@@ -33,6 +35,11 @@ export default function ProductDetailPage({
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
+  const { toggleWishlist, isWishlisted, isToggling, fetchWishlist } = useWishlistStore();
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   useEffect(() => {
     fetch(`/api/products/${slug}`)
@@ -79,7 +86,10 @@ export default function ProductDetailPage({
 
   const handleAddToCart = () => {
     addItem(product, quantity);
+    toast(`${product.title} added to cart`, "success", "cart");
   };
+
+  const wishlisted = product ? isWishlisted(product.id) : false;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -109,7 +119,7 @@ export default function ProductDetailPage({
         <div className="space-y-4">
           <div className="aspect-[4/5] rounded-lg overflow-hidden bg-stone-100">
             <img
-              src={product.images[selectedImage] || "/images/placeholder.jpg"}
+              src={product.images[selectedImage] || "/placeholder.svg"}
               alt={product.title}
               className="w-full h-full object-cover"
             />
@@ -271,8 +281,16 @@ export default function ProductDetailPage({
                 <ShoppingBag className="h-4 w-4" />
                 {product.type === "DIGITAL" ? "Buy Now" : "Add to Cart"}
               </button>
-              <button className="p-3.5 border border-stone-300 rounded-md text-stone-600 hover:bg-stone-50 transition-colors">
-                <Heart className="h-5 w-5" />
+              <button
+                onClick={() => toggleWishlist(product.id)}
+                disabled={isToggling(product.id)}
+                className={`p-3.5 border rounded-md transition-colors ${
+                  wishlisted
+                    ? "border-red-300 bg-red-50 text-red-500"
+                    : "border-stone-300 text-stone-600 hover:bg-stone-50"
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${wishlisted ? "fill-current" : ""}`} />
               </button>
               <button className="p-3.5 border border-stone-300 rounded-md text-stone-600 hover:bg-stone-50 transition-colors">
                 <Share2 className="h-5 w-5" />

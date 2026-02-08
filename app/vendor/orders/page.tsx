@@ -101,7 +101,7 @@ export default function VendorOrdersPage() {
                   <td className="p-3 font-medium text-stone-900">{order.orderNumber}</td>
                   <td className="p-3 text-stone-600">{order.user?.name || "—"}</td>
                   <td className="p-3 text-stone-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="p-3 font-medium text-stone-900">{formatPrice(order.totalAmount || order.total)}</td>
+                  <td className="p-3 font-medium text-stone-900">{formatPrice(order.total)}</td>
                   <td className="p-3">
                     <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                       order.status === "DELIVERED" ? "bg-emerald-50 text-emerald-700" :

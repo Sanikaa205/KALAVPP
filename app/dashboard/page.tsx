@@ -3,34 +3,31 @@
 import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
-import { ShoppingBag, Heart, Package, Brush, ArrowRight, TrendingUp } from "lucide-react";
+import { ShoppingBag, Heart, Package, Download, ArrowRight, TrendingUp } from "lucide-react";
 
 export default function CustomerDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
-  const [commissions, setCommissions] = useState<any[]>([]);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [downloadsCount, setDownloadsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/orders").then((r) => r.json()),
-      fetch("/api/commissions").then((r) => r.json()),
       fetch("/api/wishlist").then((r) => r.json()),
-    ]).then(([ordData, comData, wishData]) => {
+    ]).then(([ordData, wishData]) => {
       setOrders(ordData.orders || []);
-      setCommissions(comData.commissions || []);
-      setWishlistCount((wishData.items || []).length);
+      setWishlistCount((wishData.wishlistItems || wishData.items || []).length);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
-  const totalSpent = orders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
-  const activeCommissions = commissions.filter((c) => ["ACCEPTED", "IN_PROGRESS", "PENDING"].includes(c.status)).length;
+  const totalSpent = orders.reduce((s: number, o: any) => s + (o.total || 0), 0);
 
   const stats = [
     { label: "Total Orders", value: orders.length.toString(), icon: ShoppingBag, color: "bg-blue-50 text-blue-700" },
     { label: "Wishlist Items", value: wishlistCount.toString(), icon: Heart, color: "bg-pink-50 text-pink-700" },
-    { label: "Active Commissions", value: activeCommissions.toString(), icon: Brush, color: "bg-amber-50 text-amber-700" },
+    { label: "Downloads", value: downloadsCount.toString(), icon: Download, color: "bg-purple-50 text-purple-700" },
     { label: "Total Spent", value: formatPrice(totalSpent), icon: TrendingUp, color: "bg-emerald-50 text-emerald-700" },
   ];
 
@@ -82,7 +79,7 @@ export default function CustomerDashboardPage() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-stone-900">{formatPrice(order.totalAmount || order.total)}</p>
+                <p className="text-sm font-bold text-stone-900">{formatPrice(order.total)}</p>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                   order.status === "DELIVERED" ? "bg-emerald-50 text-emerald-700" :
                   order.status === "SHIPPED" ? "bg-blue-50 text-blue-700" :
@@ -96,37 +93,6 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      {/* Active Commissions */}
-      <div className="mt-6 bg-white rounded-lg border border-stone-200">
-        <div className="flex items-center justify-between p-5 border-b border-stone-200">
-          <h2 className="font-semibold text-stone-900">Active Commissions</h2>
-          <Link href="/dashboard/commissions" className="text-xs text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1">
-            View All <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-        <div className="divide-y divide-stone-100">
-          {commissions.slice(0, 2).map((c: any) => (
-            <div key={c.id} className="p-5 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-amber-50 rounded-lg"><Brush className="h-5 w-5 text-amber-700" /></div>
-                <div>
-                  <p className="text-sm font-medium text-stone-900">{c.title || c.service?.title || "Commission"}</p>
-                  <p className="text-xs text-stone-500">{c.vendor?.storeName}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-stone-900">{formatPrice(c.budget)}</p>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  c.status === "IN_PROGRESS" ? "bg-blue-50 text-blue-700" :
-                  c.status === "PENDING" ? "bg-amber-50 text-amber-700" :
-                  "bg-stone-100 text-stone-600"
-                }`}>{c.status?.replace("_", " ")}</span>
-              </div>
-            </div>
-          ))}
-          {commissions.length === 0 && <div className="p-6 text-center text-sm text-stone-400">No commissions yet</div>}
-        </div>
-      </div>
     </div>
   );
 }

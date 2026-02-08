@@ -80,11 +80,8 @@ export default function RegisterPage() {
         return;
       }
 
-      if (formData.role === "VENDOR") {
-        router.push("/vendor");
-      } else {
-        router.push("/dashboard");
-      }
+      // Redirect to homepage after registration
+      router.push("/");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");

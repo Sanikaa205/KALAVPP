@@ -75,10 +75,10 @@ export default function CustomerOrdersPage() {
               </div>
               <div className="flex items-center justify-between md:justify-end gap-3">
                 <span className="text-sm font-bold text-stone-900">
-                  {formatPrice(order.totalAmount || order.total)}
+                  {formatPrice(order.total)}
                 </span>
                 <Link
-                  href={`/dashboard/orders/${order.id}`}
+                  href={`/account/orders/${order.id}`}
                   className="p-1.5 text-stone-400 hover:text-stone-900 transition-colors"
                 >
                   <Eye className="h-4 w-4" />

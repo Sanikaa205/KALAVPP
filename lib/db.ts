@@ -25,7 +25,7 @@ export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
     if (!globalForPrisma.prisma) {
       globalForPrisma.prisma = createPrismaClient();
     }
-    return (globalForPrisma.prisma as Record<string | symbol, unknown>)[prop];
+    return (globalForPrisma.prisma as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
 

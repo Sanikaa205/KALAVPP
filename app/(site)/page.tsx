@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import type { Prisma } from "@prisma/client";
 import { ProductCard } from "@/components/products/product-card";
 import { formatPrice } from "@/lib/utils";
 import {

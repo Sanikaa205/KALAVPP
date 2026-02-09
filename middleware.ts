@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  const session = await auth();
-  const token = session?.user as { role?: string; id?: string } | undefined;
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  const isSecure = request.url.startsWith("https://");
+
+  // NextAuth v5 uses "authjs" prefix instead of "next-auth"
+  const cookieName = isSecure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+
+  const token = await getToken({
+    req: request,
+    secret,
+    cookieName,
+  });
   const { pathname } = request.nextUrl;
 
   // Protected routes

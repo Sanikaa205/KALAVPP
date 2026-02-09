@@ -24,8 +24,8 @@ function createPrismaClient() {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     ssl: { rejectUnauthorized: false },
-    max: 5,
-    idleTimeoutMillis: 30000,
+    max: 2, // keep very low — Supabase free tier has tight limits
+    idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000,
   });
   const adapter = new PrismaPg(pool);

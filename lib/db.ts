@@ -14,10 +14,17 @@ function createPrismaClient() {
   if (!connectionString) {
     throw new Error("DATABASE_URL environment variable is not set");
   }
+
+  // Parse the URL so we can pass explicit params and fully control SSL
+  const url = new URL(connectionString);
   const pool = new Pool({
-    connectionString,
+    host: url.hostname,
+    port: parseInt(url.port) || 5432,
+    database: url.pathname.slice(1),
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
     ssl: { rejectUnauthorized: false },
-    max: 5, // limit connections on serverless
+    max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });

@@ -5,7 +5,10 @@ import { hashSync } from "bcryptjs";
 const DATABASE_URL = process.env.DATABASE_URL!;
 
 async function main() {
-  const client = new pg.Client({ connectionString: DATABASE_URL });
+  const client = new pg.Client({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
   await client.connect();
   console.log("🌱 Connected to database, seeding...");
 

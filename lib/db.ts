@@ -17,14 +17,15 @@ function createPrismaClient() {
 
   // Parse the URL so we can pass explicit params and fully control SSL
   const url = new URL(connectionString);
+  const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
   const pool = new Pool({
     host: url.hostname,
     port: parseInt(url.port) || 5432,
     database: url.pathname.slice(1),
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
-    ssl: { rejectUnauthorized: false },
-    max: 2, // keep very low — Supabase free tier has tight limits
+    ssl: isLocalhost ? false : { rejectUnauthorized: false },
+    max: isLocalhost ? 10 : 2,
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000,
   });

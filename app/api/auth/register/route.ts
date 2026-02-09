@@ -12,8 +12,9 @@ export async function POST(request: NextRequest) {
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
+      const messages = parsed.error.issues.map((i) => i.message);
       return NextResponse.json(
-        { error: parsed.error.issues[0].message },
+        { error: messages.join(". ") },
         { status: 400 }
       );
     }

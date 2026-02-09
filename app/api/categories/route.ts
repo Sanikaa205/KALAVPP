@@ -6,18 +6,23 @@ import { slugify } from "@/lib/utils";
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: "asc" },
-    include: {
-      _count: { select: { products: true } },
-      children: {
-        orderBy: { sortOrder: "asc" },
-        include: { _count: { select: { products: true } } },
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: { sortOrder: "asc" },
+      include: {
+        _count: { select: { products: true } },
+        children: {
+          orderBy: { sortOrder: "asc" },
+          include: { _count: { select: { products: true } } },
+        },
       },
-    },
-  });
+    });
 
-  return NextResponse.json({ categories });
+    return NextResponse.json({ categories });
+  } catch (error) {
+    console.error("Categories fetch error:", error);
+    return NextResponse.json({ categories: [], error: "Failed to fetch categories" }, { status: 200 });
+  }
 }
 
 export async function POST(request: NextRequest) {

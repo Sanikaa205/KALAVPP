@@ -17,6 +17,9 @@ function createPrismaClient() {
   const pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
+    max: 5, // limit connections on serverless
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });

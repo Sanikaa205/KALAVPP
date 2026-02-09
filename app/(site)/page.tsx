@@ -44,11 +44,23 @@ const features = [
 ];
 
 export default async function HomePage() {
-  const featuredProducts = await prisma.product.findMany({ where: { featured: true, status: "ACTIVE" }, include: { category: true, vendor: { include: { user: { select: { name: true } } } } }, take: 8 });
-  const allProducts = await prisma.product.findMany({ where: { status: "ACTIVE" }, orderBy: { createdAt: "desc" }, include: { category: true, vendor: { include: { user: { select: { name: true } } } } }, take: 8 });
-  const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" }, include: { _count: { select: { products: true } } } });
-  const vendors = await prisma.vendorProfile.findMany({ where: { status: "APPROVED" }, include: { user: { select: { name: true, avatar: true } } }, take: 3 });
-  const services = await prisma.service.findMany({ where: { isActive: true }, include: { vendor: true }, take: 6 });
+  let featuredProducts: any[] = [];
+  let allProducts: any[] = [];
+  let categories: any[] = [];
+  let vendors: any[] = [];
+  let services: any[] = [];
+
+  try {
+    [featuredProducts, allProducts, categories, vendors, services] = await Promise.all([
+      prisma.product.findMany({ where: { featured: true, status: "ACTIVE" }, include: { category: true, vendor: { include: { user: { select: { name: true } } } } }, take: 8 }),
+      prisma.product.findMany({ where: { status: "ACTIVE" }, orderBy: { createdAt: "desc" }, include: { category: true, vendor: { include: { user: { select: { name: true } } } } }, take: 8 }),
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" }, include: { _count: { select: { products: true } } } }),
+      prisma.vendorProfile.findMany({ where: { status: "APPROVED" }, include: { user: { select: { name: true, avatar: true } } }, take: 3 }),
+      prisma.service.findMany({ where: { isActive: true }, include: { vendor: true }, take: 6 }),
+    ]);
+  } catch (error) {
+    console.error("Homepage data fetch error:", error);
+  }
 
   return (
     <div>

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +14,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      return NextResponse.json(
+        { error: "Upload service not configured" },
+        { status: 503 }
+      );
+    }
+
     const formData = await request.formData();
     const files = formData.getAll("files") as File[];
 
@@ -26,10 +34,6 @@ export async function POST(request: NextRequest) {
     if (files.length > 10) {
       return NextResponse.json({ error: "Maximum 10 files allowed" }, { status: 400 });
     }
-
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
 
     const uploadedUrls: string[] = [];
     const errors: string[] = [];
@@ -47,19 +51,24 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Generate unique filename
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2, 8);
-      const filename = `${timestamp}_${random}.${ext}`;
+      // Upload to Cloudinary
+      const cloudinaryForm = new FormData();
+      cloudinaryForm.append("file", file);
+      cloudinaryForm.append("upload_preset", uploadPreset);
+      cloudinaryForm.append("folder", "kalavpp");
 
-      // Write file
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filePath = path.join(uploadDir, filename);
-      await writeFile(filePath, buffer);
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: cloudinaryForm }
+      );
 
-      uploadedUrls.push(`/uploads/${filename}`);
+      if (!res.ok) {
+        errors.push(`${file.name}: Upload failed`);
+        continue;
+      }
+
+      const data = await res.json();
+      uploadedUrls.push(data.secure_url);
     }
 
     if (uploadedUrls.length === 0 && errors.length > 0) {
